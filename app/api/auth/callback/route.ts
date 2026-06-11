@@ -32,6 +32,7 @@ export async function GET(req: Request) {
           email: mockCorsairUser.email,
           name: mockCorsairUser.name,
           authProvider: 'corsair',
+          emailVerifiedAt: new Date(),
         },
       });
     }

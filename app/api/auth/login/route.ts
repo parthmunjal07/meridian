@@ -15,6 +15,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
+    if (!user.emailVerifiedAt) {
+      return NextResponse.json({ 
+        error: 'Email not verified',
+        needsVerification: true 
+      }, { status: 403 });
+    }
+
     const isValidPassword = await comparePasswords(password, user.passwordHash);
     if (!isValidPassword) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { hashPassword } from '@/lib/auth';
 import { Resend } from 'resend';
 import crypto from 'crypto';
 
@@ -9,30 +8,28 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 export async function POST(req: Request) {
   try {
-    const { email, password, name } = await req.json();
+    const { email } = await req.json();
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+    if (!email) {
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      return NextResponse.json({ error: 'User already exists' }, { status: 409 });
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      // Return 200 to prevent email enumeration
+      return NextResponse.json({ message: 'If the email exists and is unverified, a new link has been sent.' }, { status: 200 });
     }
 
-    const passwordHash = await hashPassword(password);
-    
-    // Create the unverified user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name,
-        passwordHash,
-        authProvider: 'local',
-      },
+    if (user.emailVerifiedAt) {
+      return NextResponse.json({ error: 'Email is already verified' }, { status: 400 });
+    }
+
+    // Invalidate old tokens for this identifier
+    await prisma.verificationToken.deleteMany({
+      where: { identifier: email },
     });
 
-    // Generate Verification Token
+    // Generate new Verification Token
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
@@ -49,9 +46,9 @@ export async function POST(req: Request) {
     
     if (process.env.RESEND_API_KEY) {
       await resend.emails.send({
-        from: 'noreply@corsair.dev', // Ensure you configure this domain in Resend
+        from: 'noreply@corsair.dev', 
         to: email,
-        subject: 'Verify your email address',
+        subject: 'Verify your email address (Resend)',
         html: `<p>Please verify your email by clicking the link below:</p><p><a href="${verifyLink}">${verifyLink}</a></p>`,
       });
     } else {
@@ -59,11 +56,11 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({
-      message: 'User created successfully. Please check your email to verify your account before logging in.',
-    }, { status: 201 });
+      message: 'Verification link resent.',
+    }, { status: 200 });
 
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Resend verification error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
