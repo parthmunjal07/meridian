@@ -76,3 +76,27 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const refreshToken = await getRefreshTokenCookie();
+    if (!refreshToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const payload = verifyToken(refreshToken);
+    if (!payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { searchParams } = new URL(req.url);
+    const eventId = searchParams.get('eventId');
+    
+    if (!eventId) {
+      return NextResponse.json({ error: 'eventId is required' }, { status: 400 });
+    }
+
+    await CalendarService.deleteEvent(payload.userId, eventId);
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error: any) {
+    console.error('Error deleting calendar event:', error);
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+  }
+}

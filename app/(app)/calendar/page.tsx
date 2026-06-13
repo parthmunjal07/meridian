@@ -3,13 +3,13 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import useSWR from 'swr';
 import { ChevronLeft, ChevronRight, Plus, X, Video, Calendar as CalendarIcon, Clock, AlertCircle } from 'lucide-react';
-import { 
-  format, 
-  addDays, 
-  startOfWeek, 
-  endOfWeek, 
-  subWeeks, 
-  addWeeks, 
+import {
+  format,
+  addDays,
+  startOfWeek,
+  endOfWeek,
+  subWeeks,
+  addWeeks,
   isSameDay,
   isToday,
   addMinutes,
@@ -25,7 +25,7 @@ export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [now, setNow] = useState(new Date());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  
+
   // Update "now" every minute for the timeline
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 60000);
@@ -57,13 +57,15 @@ export default function CalendarPage() {
   // Form & Pane State
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [panelWidth, setPanelWidth] = useState(360);
-  
+
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [startText, setStartText] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
-  const [duration, setDuration] = useState(30); // minutes
+  const [endText, setEndText] = useState(format(addMinutes(new Date(), 30), "yyyy-MM-dd'T'HH:mm"));
+  const [recurrence, setRecurrence] = useState('NONE');
   const [attendeesText, setAttendeesText] = useState('');
   const [description, setDescription] = useState('');
+  const [colorId, setColorId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
@@ -77,9 +79,11 @@ export default function CalendarPage() {
     setSelectedEventId(null);
     setTitle('');
     setStartText(format(d, "yyyy-MM-dd'T'HH:mm"));
-    setDuration(30);
+    setEndText(format(addMinutes(d, 30), "yyyy-MM-dd'T'HH:mm"));
+    setRecurrence('NONE');
     setAttendeesText('');
     setDescription('');
+    setColorId(null);
     setFormError('');
     setFreeBusyData(null);
     setIsPanelOpen(true);
@@ -91,9 +95,11 @@ export default function CalendarPage() {
     setStartText(event.start ? format(new Date(event.start), "yyyy-MM-dd'T'HH:mm") : '');
     const startD = new Date(event.start);
     const endD = event.end ? new Date(event.end) : addMinutes(startD, 30);
-    setDuration(Math.max(differenceInMinutes(endD, startD), 15));
+    setEndText(format(endD, "yyyy-MM-dd'T'HH:mm"));
+    setRecurrence('NONE'); // Edit master instance recurrence is not supported for now
     setAttendeesText(event.attendees ? event.attendees.map((a: any) => a.email).join(', ') : '');
     setDescription(event.description || '');
+    setColorId(event.colorId || null);
     setFormError('');
     setFreeBusyData(null);
     setIsPanelOpen(true);
@@ -103,7 +109,8 @@ export default function CalendarPage() {
     setSelectedEventId(null);
     setTitle('');
     setStartText(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
-    setDuration(30);
+    setEndText(format(addMinutes(new Date(), 30), "yyyy-MM-dd'T'HH:mm"));
+    setRecurrence('NONE');
     setAttendeesText('');
     setDescription('');
     setFormError('');
@@ -119,11 +126,11 @@ export default function CalendarPage() {
   useEffect(() => {
     const handler = setTimeout(async () => {
       const emails = attendeesText.split(',').map(e => e.trim()).filter(e => e && e.includes('@'));
-      if (emails.length > 0 && startText) {
+      if (emails.length > 0 && startText && endText) {
         setIsCheckingFreeBusy(true);
         try {
           const startDate = new Date(startText);
-          const endDate = addMinutes(startDate, duration);
+          const endDate = new Date(endText);
           const res = await fetch('/api/calendar/freebusy', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -148,7 +155,7 @@ export default function CalendarPage() {
     }, 1000);
 
     return () => clearTimeout(handler);
-  }, [startText, duration, attendeesText]);
+  }, [startText, endText, attendeesText]);
 
   const handleSubmit = async () => {
     if (!startText) return;
@@ -156,14 +163,16 @@ export default function CalendarPage() {
     setFormError('');
     try {
       const startDate = new Date(startText);
-      const endDate = addMinutes(startDate, duration);
-      
+      const endDate = new Date(endText);
+
       const payload = {
         title: title || 'New Event',
         start: startDate.toISOString(),
         end: endDate.toISOString(),
         description,
         attendees: attendeesText.split(',').map(e => e.trim()).filter(e => e && e.includes('@')),
+        ...(colorId ? { colorId } : {}),
+        ...(recurrence !== 'NONE' ? { recurrence: [recurrence] } : {}),
         ...(selectedEventId ? { eventId: selectedEventId } : {})
       };
 
@@ -180,6 +189,27 @@ export default function CalendarPage() {
 
       mutate();
       handleClosePanel(); // clear form and close on success
+    } catch (err: any) {
+      setFormError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!selectedEventId) return;
+    setIsSubmitting(true);
+    setFormError('');
+    try {
+      const res = await fetch(`/api/calendar?eventId=${selectedEventId}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete event');
+      }
+      mutate();
+      handleClosePanel();
     } catch (err: any) {
       setFormError(err.message);
     } finally {
@@ -218,14 +248,14 @@ export default function CalendarPage() {
               {format(weekStart, 'MMMM d')} – {format(weekEnd, 'd, yyyy')}
             </h2>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <div className="flex items-center bg-[#151515] border border-[#222] rounded-lg p-1">
               <button className="px-4 py-1.5 text-[11px] font-bold text-zinc-500 hover:text-white transition-colors uppercase tracking-wider">Day</button>
               <button className="px-4 py-1.5 text-[11px] font-bold text-zinc-200 bg-[#2a2a2a] rounded-md transition-colors uppercase tracking-wider">Week</button>
               <button className="px-4 py-1.5 text-[11px] font-bold text-zinc-500 hover:text-white transition-colors uppercase tracking-wider">Month</button>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <button onClick={handlePrevWeek} className="p-2 bg-[#151515] border border-[#222] hover:bg-[#222] text-zinc-400 hover:text-white rounded-lg transition-colors">
                 <ChevronLeft className="w-4 h-4" />
@@ -252,13 +282,14 @@ export default function CalendarPage() {
             <div className="flex-1 grid grid-cols-7">
               {days.map((day, i) => {
                 return (
-                <div key={i} className="flex flex-col items-center justify-center py-3 border-r border-[#222] last:border-r-0">
-                  <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-1">{format(day, 'EEE')}</div>
-                  <div className={`text-[18px] font-bold w-9 h-9 flex items-center justify-center rounded-full ${isToday(day) ? 'bg-white text-black' : 'text-zinc-200'}`}>
-                    {format(day, 'd')}
+                  <div key={i} className="flex flex-col items-center justify-center py-3 border-r border-[#222] last:border-r-0">
+                    <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-1">{format(day, 'EEE')}</div>
+                    <div className={`text-[18px] font-bold w-9 h-9 flex items-center justify-center rounded-full ${isToday(day) ? 'bg-white text-black' : 'text-zinc-200'}`}>
+                      {format(day, 'd')}
+                    </div>
                   </div>
-                </div>
-              )})}
+                )
+              })}
             </div>
           </div>
 
@@ -288,7 +319,7 @@ export default function CalendarPage() {
 
               {/* Current Time Line */}
               {nowMinutesFromStart >= 0 && nowTopPx <= (HOURS.length * 64) && (
-                <div 
+                <div
                   className="absolute left-0 right-0 h-[2px] bg-red-500 z-20 pointer-events-none flex items-center"
                   style={{ top: `${nowTopPx}px` }}
                 >
@@ -308,8 +339,8 @@ export default function CalendarPage() {
                   <div key={i} className="relative border-r border-[#222] last:border-r-0">
                     {/* Clickable Slots */}
                     {HOURS.map((hour) => (
-                      <div 
-                        key={hour} 
+                      <div
+                        key={hour}
                         className="h-16 w-full hover:bg-white/5 cursor-pointer transition-colors"
                         onClick={() => handleGridClick(day, hour)}
                       />
@@ -319,15 +350,15 @@ export default function CalendarPage() {
                     {dayEvents.map((event: any, idx: number) => {
                       const startD = new Date(event.start);
                       const isAllDay = event.start.length === 10;
-                      
+
                       let top = 0;
-                      let height = 16; 
-                      
+                      let height = 16;
+
                       if (!isAllDay) {
                         const endD = event.end ? new Date(event.end) : addDays(startD, 1);
                         const startMinutesFrom9 = (startD.getHours() * 60 + startD.getMinutes()) - (CALENDAR_START_HOUR * 60);
                         const durationMinutes = Math.max(differenceInMinutes(endD, startD), 15);
-                        
+
                         top = (startMinutesFrom9 / 60) * 64; // 64px per hour (h-16 = 4rem = 64px)
                         height = (durationMinutes / 60) * 64;
                       }
@@ -337,14 +368,30 @@ export default function CalendarPage() {
 
                       const colorIdx = event.id ? event.id.charCodeAt(0) % bgColors.length : idx % bgColors.length;
 
+                      const googleColors: Record<string, { bg: string, border: string, text: string }> = {
+                        '1': { bg: 'bg-[#7986cb]/20', border: 'border-[#7986cb]', text: 'text-[#7986cb]' },
+                        '2': { bg: 'bg-[#33b679]/20', border: 'border-[#33b679]', text: 'text-[#33b679]' },
+                        '3': { bg: 'bg-[#8e24aa]/20', border: 'border-[#8e24aa]', text: 'text-[#8e24aa]' },
+                        '4': { bg: 'bg-[#e67c73]/20', border: 'border-[#e67c73]', text: 'text-[#e67c73]' },
+                        '5': { bg: 'bg-[#f6c026]/20', border: 'border-[#f6c026]', text: 'text-[#f6c026]' },
+                        '6': { bg: 'bg-[#f5511d]/20', border: 'border-[#f5511d]', text: 'text-[#f5511d]' },
+                        '7': { bg: 'bg-[#039be5]/20', border: 'border-[#039be5]', text: 'text-[#039be5]' },
+                        '8': { bg: 'bg-[#616161]/20', border: 'border-[#616161]', text: 'text-[#616161]' },
+                        '9': { bg: 'bg-[#3f51b5]/20', border: 'border-[#3f51b5]', text: 'text-[#3f51b5]' },
+                        '10': { bg: 'bg-[#0b8043]/20', border: 'border-[#0b8043]', text: 'text-[#0b8043]' },
+                        '11': { bg: 'bg-[#d50000]/20', border: 'border-[#d50000]', text: 'text-[#d50000]' }
+                      };
+
+                      const c = event.colorId && googleColors[event.colorId] ? googleColors[event.colorId] : { bg: bgColors[colorIdx], border: borderColors[colorIdx], text: textColors[colorIdx] };
+
                       return (
                         <div
                           key={event.id}
                           onClick={(e) => { e.stopPropagation(); handleEventClick(event); }}
-                          className={`absolute left-1 right-1 rounded flex flex-col p-1.5 cursor-pointer transition-colors z-10 ${bgColors[colorIdx]} border ${borderColors[colorIdx]} hover:opacity-80`}
+                          className={`absolute left-1 right-1 rounded flex flex-col p-1.5 cursor-pointer transition-colors z-10 ${c.bg} border ${c.border} hover:opacity-80`}
                           style={{ top: `${Math.max(0, top)}px`, height: `${top < 0 ? height + top : height}px` }}
                         >
-                          <span className={`text-[10px] font-mono font-bold truncate ${textColors[colorIdx]}`}>
+                          <span className={`text-[10px] font-mono font-bold truncate ${c.text}`}>
                             {format(startD, 'h:mm a')}
                           </span>
                           {!isAllDay && height >= 48 && top >= 0 && (
@@ -365,7 +412,7 @@ export default function CalendarPage() {
 
       {/* Right Sidebar - Create Event */}
       {isPanelOpen && (
-        <div 
+        <div
           style={{ width: panelWidth }}
           className="shrink-0 bg-[#111] flex flex-col h-full overflow-hidden border-l border-[#222] relative"
         >
@@ -409,45 +456,60 @@ export default function CalendarPage() {
               {/* Title */}
               <div>
                 <label className="block text-[10px] font-bold text-zinc-500 tracking-[0.15em] uppercase mb-2">Title</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  placeholder="Event title..." 
-                  className="w-full bg-[#222] border border-[#333] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-500 transition-colors" 
+                  placeholder="Event title..."
+                  className="w-full bg-[#222] border border-[#333] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-500 transition-colors"
                 />
               </div>
 
               {/* Date / Time */}
-              <div>
-                <label className="block text-[10px] font-bold text-zinc-500 tracking-[0.15em] uppercase mb-2">Start</label>
-                <input 
-                  type="datetime-local" 
-                  value={startText}
-                  onChange={e => setStartText(e.target.value)}
-                  className="w-full bg-[#222] border border-[#333] rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-zinc-500 transition-colors [color-scheme:dark]" 
-                />
-              </div>
-
-              {/* Duration */}
-              <div>
-                <label className="block text-[10px] font-bold text-zinc-500 tracking-[0.15em] uppercase mb-2">Duration</label>
-                <div className="flex items-center gap-2">
-                  {[30, 45, 60, 120].map(mins => (
-                    <button 
-                      key={mins}
-                      onClick={() => setDuration(mins)}
-                      className={`flex-1 py-1.5 rounded-md border text-[12px] font-medium transition-colors ${
-                        duration === mins 
-                          ? 'border-white bg-white text-black font-semibold' 
-                          : 'border-[#333] bg-[#222] text-zinc-400 hover:bg-[#2a2a2a]'
-                      }`}
-                    >
-                      {mins === 60 ? '1h' : mins === 120 ? '2h' : `${mins}m`}
-                    </button>
-                  ))}
+              <div className="gap-4">
+                <div className="flex-1 mb-4">
+                  <label className="block text-[10px] font-bold text-zinc-500 tracking-[0.15em] uppercase mb-2">Start</label>
+                  <input
+                    type="datetime-local"
+                    value={startText}
+                    onChange={e => {
+                      setStartText(e.target.value);
+                      if (endText && new Date(e.target.value) >= new Date(endText)) {
+                        setEndText(format(addMinutes(new Date(e.target.value), 30), "yyyy-MM-dd'T'HH:mm"));
+                      }
+                    }}
+                    className="w-full bg-[#222] border border-[#333] rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-zinc-500 transition-colors [color-scheme:dark]"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[10px] font-bold text-zinc-500 tracking-[0.15em] uppercase mb-2">End</label>
+                  <input
+                    type="datetime-local"
+                    value={endText}
+                    onChange={e => setEndText(e.target.value)}
+                    className="w-full bg-[#222] border border-[#333] rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-zinc-500 transition-colors [color-scheme:dark]"
+                  />
                 </div>
               </div>
+
+              {/* Repeat */}
+              {!selectedEventId && (
+                <div>
+                  <label className="block text-[10px] font-bold text-zinc-500 tracking-[0.15em] uppercase mb-2">Repeat</label>
+                  <select
+                    value={recurrence}
+                    onChange={e => setRecurrence(e.target.value)}
+                    className="w-full bg-[#222] border border-[#333] rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-zinc-500 transition-colors [color-scheme:dark]"
+                  >
+                    <option value="NONE">Does not repeat</option>
+                    <option value="RRULE:FREQ=DAILY">Daily</option>
+                    <option value="RRULE:FREQ=WEEKLY">Weekly</option>
+                    <option value="RRULE:FREQ=MONTHLY">Monthly</option>
+                    <option value="RRULE:FREQ=YEARLY">Yearly</option>
+                    <option value="RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR">Every weekday (Mon-Fri)</option>
+                  </select>
+                </div>
+              )}
 
               {/* Attendees */}
               <div>
@@ -460,7 +522,7 @@ export default function CalendarPage() {
                           {email[0]}
                         </div>
                         {email}
-                        <button 
+                        <button
                           onClick={() => {
                             const newEmails = attendeeEmails.filter(e => e !== email);
                             setAttendeesText(newEmails.join(', '));
@@ -472,12 +534,12 @@ export default function CalendarPage() {
                       </div>
                     ))}
                   </div>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={attendeesText}
                     onChange={e => setAttendeesText(e.target.value)}
-                    placeholder={attendeeEmails.length === 0 ? "Add comma separated emails..." : "Add..."} 
-                    className="bg-transparent text-[13px] text-white placeholder:text-zinc-500 focus:outline-none px-1" 
+                    placeholder={attendeeEmails.length === 0 ? "Add comma separated emails..." : "Add..."}
+                    className="bg-transparent text-[13px] text-white placeholder:text-zinc-500 focus:outline-none px-1"
                   />
                 </div>
               </div>
@@ -496,7 +558,7 @@ export default function CalendarPage() {
                     )
                   ) : null}
                 </div>
-                
+
                 {freeBusyData && (
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-1 mb-1">
@@ -522,29 +584,59 @@ export default function CalendarPage() {
               {/* Notes */}
               <div>
                 <label className="block text-[10px] font-bold text-zinc-500 tracking-[0.15em] uppercase mb-2">Notes</label>
-                <textarea 
-                  placeholder="Agenda, context..." 
-                  rows={3} 
+                <textarea
+                  placeholder="Agenda, context..."
+                  rows={3}
                   value={description}
                   onChange={e => setDescription(e.target.value)}
-                  className="w-full bg-[#222] border border-[#333] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-500 transition-colors resize-none" 
+                  className="w-full bg-[#222] border border-[#333] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-500 transition-colors resize-none"
                 />
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <button 
-                  onClick={handleClosePanel}
-                  className="flex-1 py-2 rounded-lg border border-[#333] bg-[#1a1a1a] text-[13px] font-semibold text-zinc-300 hover:bg-[#222] transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handleSubmit}
-                  disabled={isSubmitting || !startText}
-                  className="flex-1 py-2 rounded-lg bg-white text-black text-[13px] font-semibold hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Saving...' : (selectedEventId ? 'Update Event' : <><Plus className="w-4 h-4" /> Create Event</>)}
-                </button>
+              {/* Color Picker */}
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-500 tracking-[0.15em] uppercase mb-2">Color</label>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => setColorId(null)} className={`w-6 h-6 rounded-full border-2 ${!colorId ? 'border-white' : 'border-transparent'} bg-[#333]`} title="Default" />
+                  <button onClick={() => setColorId('1')} className={`w-6 h-6 rounded-full border-2 ${colorId === '1' ? 'border-white' : 'border-transparent'} bg-[#7986cb]`} title="Lavender" />
+                  <button onClick={() => setColorId('2')} className={`w-6 h-6 rounded-full border-2 ${colorId === '2' ? 'border-white' : 'border-transparent'} bg-[#33b679]`} title="Sage" />
+                  <button onClick={() => setColorId('3')} className={`w-6 h-6 rounded-full border-2 ${colorId === '3' ? 'border-white' : 'border-transparent'} bg-[#8e24aa]`} title="Grape" />
+                  <button onClick={() => setColorId('4')} className={`w-6 h-6 rounded-full border-2 ${colorId === '4' ? 'border-white' : 'border-transparent'} bg-[#e67c73]`} title="Flamingo" />
+                  <button onClick={() => setColorId('5')} className={`w-6 h-6 rounded-full border-2 ${colorId === '5' ? 'border-white' : 'border-transparent'} bg-[#f6c026]`} title="Banana" />
+                  <button onClick={() => setColorId('6')} className={`w-6 h-6 rounded-full border-2 ${colorId === '6' ? 'border-white' : 'border-transparent'} bg-[#f5511d]`} title="Tangerine" />
+                  <button onClick={() => setColorId('7')} className={`w-6 h-6 rounded-full border-2 ${colorId === '7' ? 'border-white' : 'border-transparent'} bg-[#039be5]`} title="Peacock" />
+                  <button onClick={() => setColorId('8')} className={`w-6 h-6 rounded-full border-2 ${colorId === '8' ? 'border-white' : 'border-transparent'} bg-[#616161]`} title="Graphite" />
+                  <button onClick={() => setColorId('9')} className={`w-6 h-6 rounded-full border-2 ${colorId === '9' ? 'border-white' : 'border-transparent'} bg-[#3f51b5]`} title="Blueberry" />
+                  <button onClick={() => setColorId('10')} className={`w-6 h-6 rounded-full border-2 ${colorId === '10' ? 'border-white' : 'border-transparent'} bg-[#0b8043]`} title="Basil" />
+                  <button onClick={() => setColorId('11')} className={`w-6 h-6 rounded-full border-2 ${colorId === '11' ? 'border-white' : 'border-transparent'} bg-[#d50000]`} title="Tomato" />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 pt-2">
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleClosePanel}
+                    className="flex-1 py-2 rounded-lg border border-[#333] bg-[#1a1a1a] text-[13px] font-semibold text-zinc-300 hover:bg-[#222] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting || !startText}
+                    className="flex-1 py-2 rounded-lg bg-white text-black text-[13px] font-semibold hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isSubmitting ? 'Saving...' : (selectedEventId ? 'Update Event' : <><Plus className="w-4 h-4" /> Create Event</>)}
+                  </button>
+                </div>
+                {selectedEventId && (
+                  <button
+                    onClick={handleDeleteEvent}
+                    disabled={isSubmitting}
+                    className="w-full py-2 rounded-lg border border-red-500/30 bg-red-500/10 text-red-500 text-[13px] font-semibold hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    Delete Event
+                  </button>
+                )}
               </div>
             </div>
           </div>

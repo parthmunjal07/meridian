@@ -6,7 +6,9 @@ export const calendarEventSchema = z.object({
   end: z.string().min(1, 'End time is required'),
   location: z.string().optional(),
   description: z.string().optional(),
-  attendees: z.array(z.string().email('Invalid email')).optional()
+  attendees: z.array(z.string().email('Invalid email')).optional(),
+  colorId: z.string().optional(),
+  recurrence: z.array(z.string()).optional()
 });
 
 export type CalendarEventInput = z.infer<typeof calendarEventSchema>;
