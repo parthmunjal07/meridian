@@ -10,6 +10,10 @@ export async function generateDigestForUser(userId: string) {
     const listResult = await EmailService.getEmails(userId, 20);
     const recentEmails = listResult.emails || [];
 
+    if (recentEmails.length === 0) {
+      throw new Error("No emails found for digest generation. Make sure Gmail is connected.");
+    }
+
     const emailContext = recentEmails
       .map((e: any) => `From: ${e.from}\nSubject: ${e.subject}\nBody Snippet: ${sanitizeLongText(e.body || e.snippet || '', 150)}`)
       .join('\n\n');
@@ -77,8 +81,8 @@ Output ONLY valid JSON with no markdown wrapping. Do not include markdown code b
       },
     });
     return parsed;
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error generating digest for user ${userId}:`, error);
-    return null;
+    throw error;
   }
 }

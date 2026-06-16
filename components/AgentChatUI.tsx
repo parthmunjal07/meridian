@@ -10,10 +10,11 @@ import { Waveform } from '@/components/Waveform';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 
 export function AgentChatUI({ onClose, isDocked = false }: { onClose?: () => void, isDocked?: boolean }) {
-  const { state: voiceState, toggleListening, transcript } = useVoiceInput();
+  const { state: voiceState, toggleListening, stopListening, transcript, setTranscript } = useVoiceInput();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [input, setInput] = useState('');
+  const [baseInput, setBaseInput] = useState('');
   
   const { messages, sendMessage, status } = useChat({
     api: '/api/chat',
@@ -23,10 +24,16 @@ export function AgentChatUI({ onClose, isDocked = false }: { onClose?: () => voi
   const isLoading = status === 'submitted' || status === 'streaming' || status === 'generating';
 
   useEffect(() => {
-    if (transcript) {
-      setInput(transcript);
+    if (voiceState === 'listening') {
+      setBaseInput(input);
     }
-  }, [transcript]);
+  }, [voiceState]);
+
+  useEffect(() => {
+    if (voiceState === 'listening' && transcript) {
+      setInput((baseInput + ' ' + transcript).trim());
+    }
+  }, [transcript, voiceState, baseInput]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
@@ -36,7 +43,11 @@ export function AgentChatUI({ onClose, isDocked = false }: { onClose?: () => voi
     e?.preventDefault();
     if (!input || !input.trim()) return;
     sendMessage({ text: input });
+    
     setInput('');
+    setBaseInput('');
+    setTranscript('');
+    stopListening();
   };
 
   // Keyboard shortcuts (ctrl+v/k) were intentionally removed per user request to avoid conflicts.
