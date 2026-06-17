@@ -19,7 +19,7 @@ export async function proxy(req: NextRequest) {
   }
 
   // Allow public routes
-  if (pathname === '/login' || pathname === '/register') {
+  if (pathname === '/' || pathname === '/login' || pathname === '/register') {
     return NextResponse.next();
   }
 

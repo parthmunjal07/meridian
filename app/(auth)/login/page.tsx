@@ -2,6 +2,8 @@
 
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -44,7 +46,12 @@ function LoginForm() {
   const googleAuthUrl = `/api/auth/google?redirect=${encodeURIComponent(redirect)}`;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F9FAFB] p-4 font-sans selection:bg-blue-500/30">
+    <div className="flex min-h-screen items-center justify-center bg-[#F9FAFB] p-4 font-sans selection:bg-blue-500/30 relative">
+      <Link href="/" className="absolute top-6 left-6 flex items-center gap-2 text-[13px] font-semibold text-zinc-500 hover:text-zinc-900 transition-colors">
+        <ArrowLeft className="w-4 h-4" />
+        Back to Home
+      </Link>
+
       <div className="w-full max-w-[400px] space-y-8 bg-white p-10 rounded-2xl border border-zinc-200 shadow-xl relative overflow-hidden">
         {/* Subtle top glow */}
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent" />
@@ -131,6 +138,12 @@ function LoginForm() {
           </svg>
           Continue with Google
         </button>
+
+        <div className="text-center pt-2">
+          <p className="text-[13px] text-zinc-500 font-medium">
+            Don't have an account? <Link href="/register" className="text-blue-600 font-bold hover:underline">Sign up</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
