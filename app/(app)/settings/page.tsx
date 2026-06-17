@@ -11,9 +11,18 @@ export default async function SettingsPage() {
   const payload = verifyToken(refreshToken);
   if (!payload) redirect('/login');
 
-  const user = await prisma.user.findUnique({
-    where: { id: payload.userId },
-  });
+  let user: any;
+  if (payload.userId === 'demo-user') {
+    user = {
+      id: 'demo-user',
+      gmailConnected: true,
+      calendarConnected: true,
+    };
+  } else {
+    user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+    });
+  }
 
   if (!user) redirect('/login');
 
@@ -102,6 +111,43 @@ export default async function SettingsPage() {
                   </a>
                 )}
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Shortcuts Section */}
+        <section className="bg-white border border-zinc-200 rounded-[32px] p-8 lg:p-10 shadow-sm">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight mb-2">Keyboard Shortcuts</h2>
+            <p className="text-zinc-500 text-[15px]">
+              Navigate Meridian at the speed of thought without leaving your keyboard.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center justify-between p-5 rounded-3xl border border-zinc-100 bg-zinc-50 hover:bg-white transition-colors">
+              <span className="text-[15px] font-medium text-zinc-900">Compose new email</span>
+              <kbd className="px-3 py-1.5 text-xs font-mono font-bold text-zinc-600 bg-white border border-zinc-200 rounded-lg shadow-sm">c</kbd>
+            </div>
+            <div className="flex items-center justify-between p-5 rounded-3xl border border-zinc-100 bg-zinc-50 hover:bg-white transition-colors">
+              <span className="text-[15px] font-medium text-zinc-900">Reply to selected email</span>
+              <kbd className="px-3 py-1.5 text-xs font-mono font-bold text-zinc-600 bg-white border border-zinc-200 rounded-lg shadow-sm">r</kbd>
+            </div>
+            <div className="flex items-center justify-between p-5 rounded-3xl border border-zinc-100 bg-zinc-50 hover:bg-white transition-colors">
+              <span className="text-[15px] font-medium text-zinc-900">Archive selected email</span>
+              <kbd className="px-3 py-1.5 text-xs font-mono font-bold text-zinc-600 bg-white border border-zinc-200 rounded-lg shadow-sm">e</kbd>
+            </div>
+            <div className="flex items-center justify-between p-5 rounded-3xl border border-zinc-100 bg-zinc-50 hover:bg-white transition-colors">
+              <span className="text-[15px] font-medium text-zinc-900">Search emails</span>
+              <kbd className="px-3 py-1.5 text-xs font-mono font-bold text-zinc-600 bg-white border border-zinc-200 rounded-lg shadow-sm">/</kbd>
+            </div>
+            <div className="flex items-center justify-between p-5 rounded-3xl border border-zinc-100 bg-zinc-50 hover:bg-white transition-colors">
+              <span className="text-[15px] font-medium text-zinc-900">Toggle shortcut overlay</span>
+              <kbd className="px-3 py-1.5 text-xs font-mono font-bold text-zinc-600 bg-white border border-zinc-200 rounded-lg shadow-sm">?</kbd>
+            </div>
+            <div className="flex items-center justify-between p-5 rounded-3xl border border-zinc-100 bg-zinc-50 hover:bg-white transition-colors">
+              <span className="text-[15px] font-medium text-zinc-900">Close reading pane</span>
+              <kbd className="px-3 py-1.5 text-xs font-mono font-bold text-zinc-600 bg-white border border-zinc-200 rounded-lg shadow-sm">Esc</kbd>
             </div>
           </div>
         </section>

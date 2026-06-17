@@ -164,9 +164,9 @@ export default function InboxPage() {
   ] as const;
 
   return (
-    <div className="flex flex-1 overflow-hidden bg-white w-full h-full">
+    <div className="flex flex-1 min-w-0 overflow-hidden bg-white w-full h-full">
       {/* Pane 2: Email List (Main Content) */}
-      <div className="flex-1 flex flex-col h-full relative border-r border-zinc-200">
+      <div className="flex-1 min-w-0 flex flex-col h-full relative border-r border-zinc-200">
         
         {/* Header (Top Nav) */}
         <div className="h-[72px] flex items-center justify-between px-6 border-b border-zinc-200 shrink-0">
@@ -184,9 +184,8 @@ export default function InboxPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-10 py-2 bg-white border border-zinc-200 rounded-full text-[13px] text-zinc-900 placeholder-zinc-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
-              <div className="absolute right-3 flex items-center gap-0.5">
-                <kbd className="font-sans text-[11px] font-medium text-zinc-400">⌘</kbd>
-                <kbd className="font-sans text-[11px] font-medium text-zinc-400">S</kbd>
+              <div className="absolute right-3 flex items-center">
+                <kbd className="font-sans text-[12px] font-bold text-zinc-400 bg-zinc-100 border border-zinc-200 px-1.5 py-0.5 rounded-md">/</kbd>
               </div>
             </div>
 
@@ -265,7 +264,22 @@ export default function InboxPage() {
 
         {/* Email List */}
         <div className="flex-1 overflow-y-auto bg-white">
-          {isEmpty ? (
+          {isLoadingInitialData ? (
+            <div className="flex flex-col">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="flex items-start gap-4 px-6 py-4 border-b border-zinc-100">
+                  <div className="mt-1 w-2 h-2 rounded-full bg-zinc-200 animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
+                  <div className="flex-1 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="w-32 h-3.5 bg-zinc-200 rounded-full animate-pulse" style={{ animationDelay: `${i * 100 + 50}ms` }} />
+                      <div className="w-10 h-3 bg-zinc-100 rounded-full animate-pulse" style={{ animationDelay: `${i * 100 + 100}ms` }} />
+                    </div>
+                    <div className="w-2/3 h-3.5 bg-zinc-100 rounded-full animate-pulse" style={{ animationDelay: `${i * 100 + 150}ms` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : isEmpty ? (
             <div className="text-zinc-500 text-[14px] text-center mt-20">No emails found in this view.</div>
           ) : (
             displayEmails.map((email: any) => (
@@ -290,7 +304,7 @@ export default function InboxPage() {
       </div>
 
       {/* Pane 3: Right Sidebar Toggle (Reading Pane OR Calendar) */}
-      {selectedEmailId && selectedEmail ? (
+      {selectedEmailId && selectedEmail && (
         <ReadingPane
           email={selectedEmail}
           onArchive={handleArchive}
@@ -298,9 +312,11 @@ export default function InboxPage() {
           onReply={handleReply}
           onClose={() => setSelectedEmailId(null)}
         />
-      ) : (
-        <CalendarSidebar />
       )}
+      
+      <div className={selectedEmailId && selectedEmail ? 'hidden' : 'block h-full shrink-0'}>
+        <CalendarSidebar />
+      </div>
 
       {/* Modals */}
       {isComposeOpen && (
