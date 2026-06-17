@@ -14,7 +14,7 @@ export function AgentChatUI({ onClose, isDocked = false, isAuthenticated = false
   const { state: voiceState, toggleListening, stopListening, transcript, setTranscript } = useVoiceInput();
   
   // 2. Local State for Input Management (needed for Voice + Typing merging)
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [input, setInput] = useState('');
   const [baseInput, setBaseInput] = useState('');
   
@@ -39,7 +39,7 @@ export function AgentChatUI({ onClose, isDocked = false, isAuthenticated = false
   }, [transcript, voiceState, baseInput]);
 
   // --- HANDLERS ---
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
   };
 
@@ -189,13 +189,21 @@ export function AgentChatUI({ onClose, isDocked = false, isAuthenticated = false
            )}
 
            <div className={`flex items-center rounded-xl p-1 transition-all duration-200 ${voiceState === 'listening' ? 'bg-zinc-50 border border-zinc-200 shadow-sm' : 'bg-zinc-50/50 border border-zinc-200/50 hover:bg-zinc-50 focus-within:bg-zinc-50 focus-within:border-zinc-300 focus-within:shadow-sm'}`}>
-              <input
+              <textarea
                 ref={inputRef}
-                type="text"
                 value={input}
                 onChange={handleInputChange}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (input && input.trim() !== '' && !isLoading) {
+                      handleSubmit(e as any);
+                    }
+                  }
+                }}
+                rows={1}
                 placeholder="Ask Superhuman AI..."
-                className="flex-1 bg-transparent border-none focus:outline-none text-[14px] tracking-tight text-zinc-900 px-3 placeholder:text-zinc-400 h-10"
+                className="flex-1 bg-transparent border-none focus:outline-none text-[14px] tracking-tight text-zinc-900 px-3 placeholder:text-zinc-400 min-h-[40px] max-h-[120px] resize-none py-2.5"
               />
               <div className="flex items-center gap-1 pr-1">
                 <button

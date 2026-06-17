@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import useSWR from 'swr';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Plus, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, AlertCircle, Video } from 'lucide-react';
 import CreateEventModal from '@/components/CreateEventModal';
 import {
   format,
@@ -370,14 +370,39 @@ export default function CalendarPage() {
                         }}
                       >
                         {height >= 60 && (
-                          <span className={`text-[13px] font-semibold mb-1 opacity-90`}>
-                            {event.summary || event.title || 'Untitled Event'}
-                          </span>
+                          <div className={`text-[13px] font-semibold mb-1 opacity-90 flex items-start justify-between gap-2`}>
+                            <span className="line-clamp-2 leading-tight">{event.summary || event.title || 'Untitled Event'}</span>
+                            {event.hangoutLink && (
+                              <a 
+                                href={event.hangoutLink} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                onClick={(e) => e.stopPropagation()}
+                                className="shrink-0 flex items-center gap-1 bg-white/70 hover:bg-white text-blue-600 border border-blue-200/50 rounded-full px-1.5 py-0.5 text-[10px] font-bold shadow-sm transition-colors"
+                              >
+                                <Video className="w-3 h-3" />
+                                <span>Meet</span>
+                              </a>
+                            )}
+                          </div>
                         )}
-                        <span className={`text-[11px] font-medium opacity-80 ${height < 60 ? 'truncate' : ''}`}>
-                          {isAllDay ? 'All Day' : `${format(startD, 'h:mm a')} - ${format(event.end ? new Date(event.end) : addMinutes(startD, 30), 'h:mm a')}`}
-                          {height < 60 && ` • ${event.summary || event.title || 'Untitled Event'}`}
-                        </span>
+                        <div className={`text-[11px] font-medium opacity-80 ${height < 60 ? 'flex items-center gap-2 truncate' : ''}`}>
+                          <span>
+                            {isAllDay ? 'All Day' : `${format(startD, 'h:mm a')} - ${format(event.end ? new Date(event.end) : addMinutes(startD, 30), 'h:mm a')}`}
+                            {height < 60 && ` • ${event.summary || event.title || 'Untitled Event'}`}
+                          </span>
+                          {height < 60 && event.hangoutLink && (
+                            <a 
+                              href={event.hangoutLink} 
+                              target="_blank" 
+                               rel="noreferrer" 
+                              onClick={(e) => e.stopPropagation()}
+                              className="ml-auto shrink-0 flex items-center gap-1 bg-white/70 hover:bg-white text-blue-600 border border-blue-200/50 rounded-full px-1.5 py-0.5 text-[9px] font-bold shadow-sm transition-colors"
+                            >
+                              <Video className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
                       </div>
                     );
                   })}

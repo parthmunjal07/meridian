@@ -38,20 +38,27 @@ export class CalendarService {
     }
   }
 
+  // services/calendar.service.ts
+
   static async createEvent(corsairUserId: string, data: any) {
     const t = await getCorsairClient(corsairUserId);
     try {
+      const hasAttendees = data.attendees && data.attendees.length > 0;
+
       const responseData = await t.googlecalendar.api.events.create({
         calendarId: 'primary',
-        sendUpdates: 'all',
+        sendUpdates: hasAttendees ? 'all' : 'none',
         ...(data.addMeetLink ? { conferenceDataVersion: 1 } : {}),
-        requestBody: {
+        
+        // 🚨 FIX: Changed 'requestBody' back to 'event' for Corsair SDK compatibility
+        event: {
           summary: data.title,
           ...(data.description ? { description: data.description } : {}),
           ...(data.location ? { location: data.location } : {}),
-          start: { dateTime: data.start },
-          end: { dateTime: data.end },
-          ...(data.attendees && data.attendees.length > 0 ? { attendees: data.attendees.map((email: string) => ({ email })) } : {}),
+          // Dates are still safely sanitized!
+          start: { dateTime: new Date(data.start).toISOString() },
+          end: { dateTime: new Date(data.end).toISOString() },
+          ...(hasAttendees ? { attendees: data.attendees.map((email: string) => ({ email })) } : {}),
           ...(data.colorId ? { colorId: data.colorId } : {}),
           ...(data.recurrence ? { recurrence: data.recurrence } : {}),
           ...(data.addMeetLink ? {
@@ -74,18 +81,22 @@ export class CalendarService {
   static async updateEvent(corsairUserId: string, eventId: string, data: any) {
     const t = await getCorsairClient(corsairUserId);
     try {
+      const hasAttendees = data.attendees && data.attendees.length > 0;
+
       const updateData = await t.googlecalendar.api.events.update({
         calendarId: 'primary',
         id: eventId,
-        sendUpdates: 'all',
+        sendUpdates: hasAttendees ? 'all' : 'none',
         ...(data.addMeetLink ? { conferenceDataVersion: 1 } : {}),
-        requestBody: {
+        
+        // 🚨 FIX: Changed 'requestBody' back to 'event' here too
+        event: {
           summary: data.title,
           ...(data.description ? { description: data.description } : {}),
           ...(data.location ? { location: data.location } : {}),
-          start: { dateTime: data.start },
-          end: { dateTime: data.end },
-          ...(data.attendees && data.attendees.length > 0 ? { attendees: data.attendees.map((email: string) => ({ email })) } : {}),
+          start: { dateTime: new Date(data.start).toISOString() },
+          end: { dateTime: new Date(data.end).toISOString() },
+          ...(hasAttendees ? { attendees: data.attendees.map((email: string) => ({ email })) } : {}),
           ...(data.colorId ? { colorId: data.colorId } : {}),
           ...(data.recurrence ? { recurrence: data.recurrence } : {}),
           ...(data.addMeetLink ? {
