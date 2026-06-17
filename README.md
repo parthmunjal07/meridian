@@ -1,136 +1,138 @@
-# Superhuman Clone
+# Meridian ✦
 
-A high-performance, keyboard-centric email and calendar client inspired by Superhuman. Built with Next.js App Router, Tailwind CSS, Prisma, and Corsair for deep Google Workspace integration.
+**The fastest email and calendar experience ever made. Now with an agentic mind.**
 
-## 🚀 Overview
+[View the Live Demo](https://meridian.parthmunjal.in)
 
-This project is a sophisticated email client that aims to replicate the speed, aesthetic, and keyboard-driven workflow of Superhuman. It integrates deeply with Google Workspace (Gmail and Google Calendar) using Corsair for secure, reliable API access, and incorporates advanced AI capabilities using the Vercel AI SDK.
+Meridian is a premium, AI-first email client portfolio project built with a "Linear / Superhuman" neo-minimalist aesthetic. It transcends a simple email wrapper by integrating a fully autonomous AI agent that leverages the Model Context Protocol (MCP) to read context, draft emails, and schedule meetings on your behalf. 
 
-## 🛠 Tech Stack
+---
 
-- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS v4 (with custom scrollbars and fluid animations)
-- **Database**: PostgreSQL (via Neon) with [Prisma ORM](https://www.prisma.io/)
-- **Vector Search**: pgvector extension for PostgreSQL
-- **Integrations**: [Corsair](https://corsair.dev/) (Gmail API, Google Calendar API)
-- **AI/LLM**: Vercel AI SDK (`@ai-sdk/mistral`, `@ai-sdk/openai`, `@ai-sdk/mcp`)
-- **Data Fetching**: SWR for optimistic UI updates and real-time caching
-- **UI Components**: Shadcn UI, Lucide React, Base UI
+## 🚀 Features
 
-## 🏗 Architecture & Core Infrastructure
+- **The Autonomous Agent**: A conversational interface powered by Mistral and the Vercel AI SDK. It doesn't just draft emails—it executes them.
+- **Corsair MCP Integration**: Seamlessly connects to your Google Workspace to fetch unread emails, send messages, and create calendar events (with Google Meet links automatically injected).
+- **The Morning Digest**: A daily AI-generated synthesis of what actually matters. We extract the signal from the noise before you even open your laptop.
+- **Keyboard-Centric Design**: Keep your hands on the keys. Navigate everything in milliseconds without touching a mouse.
+- **Neo-Minimalist UI**: High whitespace, strict monochrome palettes, soft diffused shadows, and subtle glassmorphism built entirely with pure Tailwind CSS.
+- **Rate Limiting & Security**: JWT-based authentication and Redis-backed rate limiting to protect API routes and AI usage quotas.
 
-- **Next.js App Router**: Powers the entire application with Server Components where possible, and Client Components for highly interactive UI elements (like the keyboard listener and command palette).
-- **Prisma & PostgreSQL**: Uses a sophisticated schema including `pgvector` for potential AI-driven semantic search over emails. The database also tracks user roles, team structures, digest caching, and follow-ups.
-- **Corsair Integration**: Corsair acts as the bridge to Google Workspace. It handles OAuth tokens, webhook delivery (e.g., new email notifications), and rate limiting. The database maintains specialized tables (`corsair_integrations`, `corsair_accounts`, `corsair_entities`, `corsair_events`) to seamlessly sync state.
-- **Vercel AI SDK + MCP**: The project includes a highly capable Agent that can answer queries, summarize emails, and take actions on your behalf (like fetching calendar events) using the Model Context Protocol (MCP).
+---
 
-## 📊 Database Schema Highlights
+## 🛠️ Tech Stack
 
-The project utilizes Prisma with several key models:
-- `User` & `Team`: Manages user accounts, authentication (Google/Local), and team structures (Free, Pro, Team Admin).
-- `Email`: Stores synced email metadata, including body text, sender info, priority levels, and a `vector(1536)` embedding field for semantic search.
-- `DigestCache`: Stores AI-generated daily summaries of a user's inbox to prevent redundant LLM API calls, backed up by Redis.
-- `FollowUp`: Tracks scheduled follow-ups and actions linked to specific emails.
-- `Corsair*`: Specialized models that mirror Corsair's internal state to ensure robust webhook processing and entity management.
+### Frontend
+- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **State Management**: React Hooks (`useState`, `useEffect`, `useRef`)
 
-## 🚀 Current State of the Project
+### Backend & AI
+- **Database ORM**: [Prisma](https://www.prisma.io/)
+- **Database**: PostgreSQL
+- **AI Framework**: [Vercel AI SDK](https://sdk.vercel.ai/docs) (`streamText`, MCP Tooling)
+- **Model**: Mistral
+- **Integrations Engine**: [Corsair](https://corsair.dev) (Managing OAuth & Google Workspace APIs)
+- **Caching & Rate Limiting**: [Redis](https://redis.io/)
 
-This project is actively in development. Below is a breakdown of what is fully functional (wired to the backend/APIs) and what is currently mocked UI.
+---
 
-### ✅ Fully Functional (Wired to Backend)
+## 📁 Folder Structure
 
-- **Authentication**: Fully working Google OAuth flow and JWT-based session management.
-- **Inbox Syncing**: 
-  - Real-time email fetching from your actual Gmail account.
-  - Emails are correctly sorted by date (newest first).
-  - Search functionality successfully queries your live inbox.
-- **Email Actions**: 
-  - **Read**: View sanitized HTML bodies of your actual emails in the reading pane using DOMPurify.
-  - **Archive**: Removes the `INBOX` label from the email in Gmail.
-  - **Delete (Trash)**: Moves the email to the Trash folder in Gmail.
-  - **Reply / Forward / Compose**: The compose modal is functional and successfully sends emails via the Gmail API.
-- **Calendar Integration**: 
-  - Fetches events across all your active (non-holiday) Google Calendars.
-  - Fully working Day, Week, and Month views that correctly map your real events to a visual timeline.
-- **AI Agent (Chat UI)**:
-  - Accessible via the sidebar or command palette.
-  - Can fetch real-time calendar data using MCP tools (`get_calendar_events`) and synthesize natural language summaries.
-  - Includes a voice input integration (`useVoiceInput` hook) for dictating commands to the agent.
-- **Sidebar**: Dynamic user profile display (pulls your name/initials) and working Logout functionality.
-- **Keyboard Shortcuts**: Global shortcuts are wired up:
-  - `c`: Compose new email
-  - `e`: Archive selected email
-  - `r`: Reply to selected email
-  - `/`: Focus search bar
-  - `?`: Toggle shortcut overlay
+```text
+meridian/
+├── app/                      # Next.js App Router root
+│   ├── (app)/                # Authenticated routes (Inbox, Calendar, Agent)
+│   ├── api/                  # API endpoints
+│   │   ├── auth/             # JWT Authentication & Corsair OAuth callbacks
+│   │   ├── chat/             # Vercel AI SDK streaming endpoint
+│   │   ├── cron/             # Background jobs (Morning Digest)
+│   │   └── ...
+│   ├── layout.tsx            # Global HTML wrapper & Metadata
+│   └── page.tsx              # Long-form Landing Page
+├── components/               # Reusable React components
+│   ├── AgentChatUI.tsx       # The core Agent chat interface
+│   ├── AgentDockWrapper.tsx  # Floating agent dock
+│   └── ...
+├── lib/                      # Core utilities and SDK initializations
+│   ├── ai.ts                 # AI model setup
+│   ├── corsair.ts            # Corsair client and plugin configurations
+│   ├── prisma.ts             # Prisma client singleton
+│   ├── redis.ts              # Redis client for rate limiting
+│   └── digest.ts             # Logic for generating the Morning Digest
+├── services/                 # Business logic abstractions
+│   ├── calendar.service.ts   # Google Calendar API wrappers (via Corsair)
+│   └── email.service.ts      # Gmail API wrappers (via Corsair)
+├── prisma/                   # Database schema and migrations
+│   └── schema.prisma         # User models and connection states
+└── ...
+```
 
-### 🚧 UI Only / Dummy Data (Coming Soon)
+---
 
-The following features exist in the UI to demonstrate the design and UX, but are not yet fully connected to the backend logic:
+## 🧠 How the Agent Works (MCP)
 
-- **AI Features**: The "AI Summary" banner at the top of emails and the "Decision Log" (Open Questions / Action Items) are currently static mock text.
-- **Smart Chips / Third-Party Integrations**: 
-  - "Send to Slack" button
-  - "Add to calendar" smart chip
-  - "Create Linear issue" smart chip
-  - *Note: Clicking these currently displays a "Coming Soon" alert.*
-- **Advanced Filtering**: The filter icon next to the search bar is non-functional.
-- **Priority Badges**: Priority tags (Urgent/Normal/FYI) on emails are currently hardcoded/fallback placeholders.
+Meridian's AI is built on the **Model Context Protocol (MCP)**. Instead of relying on rigid, pre-programmed flows, the Vercel AI SDK is provided with a suite of strictly typed `zod` tools (e.g., `send_email`, `create_event`, `get_calendar_events`).
 
-## 📂 Project Structure
+When you ask the agent to "Cancel my 3pm meeting and let Sarah know," the AI:
+1. Calls `get_calendar_events` to find the 3 PM meeting ID.
+2. Calls `delete_event` using that ID.
+3. Calls `send_email` to Sarah with a contextual apology.
+4. Synthesizes the results of all tool calls and replies to you in natural language.
 
-- `app/api/`: Contains all Next.js API routes including Authentication (`auth/`), the AI Agent endpoints (`chat/route.ts`), Webhooks (`webhooks/corsair/route.ts`), and Cron Jobs (`cron/digest/route.ts`).
-- `app/(app)/`: The main authenticated application interface, including the Inbox, Calendar, and Agent views.
-- `components/`: Reusable React components including the core layout, command palettes, and the specialized `AgentChatUI`.
-- `lib/`: Core utilities including Prisma client instantiation (`prisma.ts`), Redis connection (`redis.ts`), Auth helpers (`auth.ts`), and AI configurations (`ai.ts`).
-- `services/`: Encapsulated business logic for interacting with Corsair and Google APIs (`calendar.service.ts`, `EventDetectionService.ts`).
+---
 
-## 💻 Getting Started
+## 🏃‍♂️ Getting Started Locally
 
-To run the project locally, you will need a PostgreSQL database (preferably Neon for pgvector support), a Redis instance, and Corsair API keys.
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database
+- Redis instance
+- Corsair Account / Self-Hosted Engine
+- Google Cloud Console Project (for OAuth Client ID/Secret)
 
-1. **Install dependencies**:
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/yourusername/meridian.git
+   cd meridian
+   ```
+
+2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-2. **Environment Variables**:
-   Copy the `.env.example` to `.env` and fill in the required keys.
-   ```bash
-   cp .env.example .env
+3. **Set up Environment Variables:**
+   Create a `.env` file in the root and add the required keys:
+   ```env
+   DATABASE_URL="postgresql://..."
+   JWT_SECRET="your_jwt_secret"
+   MISTRAL_API_KEY="your_mistral_key"
+   REDIS_URL="redis://..."
+   
+   # Corsair & Google OAuth
+   NEXT_PUBLIC_APP_URL="http://localhost:3000"
+   GOOGLE_CLIENT_ID="..."
+   GOOGLE_CLIENT_SECRET="..."
+   CORSAIR_KEK="..."
    ```
-   *Crucial variables include:*
-   - `DATABASE_URL`: PostgreSQL connection string.
-   - `REDIS_URL`: Redis connection string (defaults to `redis://localhost:6380`).
-   - `NEXT_PUBLIC_APP_URL`: Your local or production URL.
-   - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`: For OAuth.
-   - `CORSAIR_API_KEY` / `CORSAIR_DEV_KEY` / `CORSAIR_KEK`: For Corsair integrations.
-   - `MISTRAL_API_KEY`: For the Vercel AI SDK.
 
-3. **Database Setup**:
-   Generate the Prisma client and push the schema to your database.
+4. **Initialize the Database:**
    ```bash
-   npm run postinstall
+   npx prisma generate
    npx prisma db push
    ```
 
-4. **Start Background Services** (if using Docker for DB/Redis):
-   ```bash
-   docker-compose up -d
-   ```
-
-5. **Start the Development Server**:
+5. **Run the Server:**
    ```bash
    npm run dev
    ```
+   *The app will be available at [http://localhost:3000](http://localhost:3000).*
 
-6. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-## 📜 Available Scripts
+## 📜 License
 
-- `npm run dev`: Starts the Next.js development server.
-- `npm run build`: Generates the Prisma client and builds the application for production.
-- `npm run start`: Starts the production server.
-- `npm run lint`: Runs ESLint to catch errors.
-- `npm run tunnel`: Uses ngrok to expose your local server to the internet (useful for testing Corsair webhooks locally).
+This project is licensed under the MIT License.

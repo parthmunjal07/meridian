@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     const timeStr = new Date().toLocaleTimeString();
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    const systemPrompt = `You are a highly capable AI assistant inside a Superhuman clone.
+    const systemPrompt = `You are a highly capable AI assistant inside Meridian.
 User's Name: ${userName}
 Current Date: ${dateStr}
 Current Time: ${timeStr}

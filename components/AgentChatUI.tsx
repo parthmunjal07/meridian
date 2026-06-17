@@ -72,7 +72,7 @@ export function AgentChatUI({ onClose, isDocked = false, isAuthenticated = false
             <Sparkles className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
-            <h2 className="text-[14px] font-semibold tracking-tight text-zinc-900 leading-none">Superhuman AI</h2>
+            <h2 className="text-[14px] font-semibold tracking-tight text-zinc-900 leading-none">Meridian AI</h2>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -108,7 +108,7 @@ export function AgentChatUI({ onClose, isDocked = false, isAuthenticated = false
             
             <div className="flex-1 space-y-3 min-w-0">
               <div className="text-[11px] font-medium text-zinc-400 tracking-tight">
-                {m.role === 'user' ? 'You' : 'Superhuman AI'}
+                {m.role === 'user' ? 'You' : 'Meridian AI'}
               </div>
               
               {/* Render Tool Invocations (MCP Actions) - Sleek Inline Chips */}
@@ -145,7 +145,7 @@ export function AgentChatUI({ onClose, isDocked = false, isAuthenticated = false
               <Sparkles className="w-4 h-4 text-zinc-900" />
             </div>
             <div className="flex-1 space-y-3 min-w-0">
-              <div className="text-[11px] font-medium text-zinc-400 tracking-tight">Superhuman AI</div>
+              <div className="text-[11px] font-medium text-zinc-400 tracking-tight">Meridian AI</div>
               <div className="text-[14px] leading-[1.6] tracking-tight text-zinc-800 whitespace-pre-wrap break-words">
                 {error.message.includes('429') || error.message.includes('limit') 
                   ? "You've reached your daily limit of 5 AI requests. Please upgrade or return tomorrow!" 
@@ -174,7 +174,7 @@ export function AgentChatUI({ onClose, isDocked = false, isAuthenticated = false
         {!isAuthenticated ? (
           <div className="flex items-center justify-center p-2">
             <a href="/login" className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-zinc-900 text-white text-[13px] font-medium tracking-tight hover:bg-zinc-800 transition-colors shadow-sm">
-              <User className="w-4 h-4" /> Sign in to use Superhuman AI
+              <User className="w-4 h-4" /> Sign in to use Meridian AI
             </a>
           </div>
         ) : (
@@ -202,7 +202,7 @@ export function AgentChatUI({ onClose, isDocked = false, isAuthenticated = false
                   }
                 }}
                 rows={1}
-                placeholder="Ask Superhuman AI..."
+                placeholder="Ask Meridian AI..."
                 className="flex-1 bg-transparent border-none focus:outline-none text-[14px] tracking-tight text-zinc-900 px-3 placeholder:text-zinc-400 min-h-[40px] max-h-[120px] resize-none py-2.5"
               />
               <div className="flex items-center gap-1 pr-1">
