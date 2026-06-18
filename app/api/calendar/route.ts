@@ -16,92 +16,103 @@ export const GET = requireRole([], async (req: NextRequest, { user }: { user: an
 
     if (userId === 'demo-user') {
       const today = new Date();
-      const tenAM = new Date(today);
-      tenAM.setHours(10, 0, 0, 0);
-      const elevenAM = new Date(today);
-      elevenAM.setHours(11, 0, 0, 0);
+      const allEvents: any[] = [];
       
-      const twoPM = new Date(today);
-      twoPM.setHours(14, 0, 0, 0);
-      const twoThirtyPM = new Date(today);
-      twoThirtyPM.setHours(14, 30, 0, 0);
+      const generateEventsForDate = (baseDate: Date, dayOffset: number) => {
+        const date = new Date(baseDate);
+        date.setDate(date.getDate() + dayOffset);
+        
+        const setTime = (hours: number, minutes: number = 0) => {
+          const d = new Date(date);
+          d.setHours(hours, minutes, 0, 0);
+          return d.toISOString();
+        };
 
-      const elevenThirtyAM = new Date(today);
-      elevenThirtyAM.setHours(11, 30, 0, 0);
-      const twelveThirtyPM = new Date(today);
-      twelveThirtyPM.setHours(12, 30, 0, 0);
-
-      const onePM = new Date(today);
-      onePM.setHours(13, 0, 0, 0);
-      
-      const threeThirtyPM = new Date(today);
-      threeThirtyPM.setHours(15, 30, 0, 0);
-      const fourPM = new Date(today);
-      fourPM.setHours(16, 0, 0, 0);
-
-      const fivePM = new Date(today);
-      fivePM.setHours(17, 0, 0, 0);
-      const sixPM = new Date(today);
-      sixPM.setHours(18, 0, 0, 0);
-
-      return NextResponse.json({
-        events: [
+        const prefix = `mock-evt-day${dayOffset}-`;
+        
+        return [
           {
-            id: 'mock-evt-1',
+            id: prefix + '1',
             summary: "Product Sync",
             description: "Sync on Q3 roadmap",
-            start: tenAM.toISOString(),
-            end: elevenAM.toISOString(),
+            start: setTime(10),
+            end: setTime(11),
             status: "confirmed",
             htmlLink: "https://calendar.google.com"
           },
           {
-            id: 'mock-evt-2',
-            summary: "Interview with Alex",
-            description: "Frontend role chat",
-            start: twoPM.toISOString(),
-            end: twoThirtyPM.toISOString(),
-            status: "confirmed",
-            htmlLink: "https://calendar.google.com"
-          },
-          {
-            id: 'mock-evt-3',
+            id: prefix + '2',
             summary: "Design Review",
             description: "Review latest mocks for landing page",
-            start: elevenThirtyAM.toISOString(),
-            end: twelveThirtyPM.toISOString(),
+            start: setTime(11, 30),
+            end: setTime(12, 30),
             status: "confirmed",
             htmlLink: "https://calendar.google.com"
           },
           {
-            id: 'mock-evt-4',
+            id: prefix + '3',
             summary: "Lunch Break",
             description: "Blocker",
-            start: onePM.toISOString(),
-            end: twoPM.toISOString(),
+            start: setTime(13),
+            end: setTime(14),
             status: "confirmed",
             htmlLink: "https://calendar.google.com"
           },
           {
-            id: 'mock-evt-5',
+            id: prefix + '4',
+            summary: "Interview with Alex",
+            description: "Frontend role chat",
+            start: setTime(14),
+            end: setTime(14, 30),
+            status: "confirmed",
+            htmlLink: "https://calendar.google.com"
+          },
+          {
+            id: prefix + '5',
             summary: "1:1 with Manager",
             description: "Weekly sync",
-            start: threeThirtyPM.toISOString(),
-            end: fourPM.toISOString(),
+            start: setTime(15, 30),
+            end: setTime(16),
             status: "confirmed",
             htmlLink: "https://calendar.google.com"
           },
           {
-            id: 'mock-evt-6',
+            id: prefix + '6',
             summary: "Team All Hands",
             description: "Monthly all hands meeting",
-            start: fivePM.toISOString(),
-            end: sixPM.toISOString(),
+            start: setTime(17),
+            end: setTime(18),
             status: "confirmed",
             htmlLink: "https://calendar.google.com"
           }
-        ]
-      }, { status: 200 });
+        ];
+      };
+
+      for (let i = -3; i <= 3; i++) {
+        const tempDate = new Date(today);
+        tempDate.setDate(tempDate.getDate() + i);
+        
+        if (tempDate.getDay() !== 0 && tempDate.getDay() !== 6) {
+          allEvents.push(...generateEventsForDate(today, i));
+        } else {
+          const setTime = (hours: number, minutes: number = 0) => {
+            const d = new Date(tempDate);
+            d.setHours(hours, minutes, 0, 0);
+            return d.toISOString();
+          };
+          allEvents.push({
+            id: `mock-evt-day${i}-weekend`,
+            summary: "Weekend Focus Time",
+            description: "Catch up on some reading",
+            start: setTime(10),
+            end: setTime(12),
+            status: "confirmed",
+            htmlLink: "https://calendar.google.com"
+          });
+        }
+      }
+
+      return NextResponse.json({ events: allEvents }, { status: 200 });
     }
 
     const events = await CalendarService.getEvents(userId, timeMin, timeMax);
