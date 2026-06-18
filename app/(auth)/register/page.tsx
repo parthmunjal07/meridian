@@ -2,8 +2,46 @@
 
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
 
 export default function Register() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Something went wrong');
+      }
+
+      setSuccess(data.message || 'Account created! Please check your email to verify.');
+      setName('');
+      setEmail('');
+      setPassword('');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F9FAFB] p-4 font-sans selection:bg-blue-500/30 relative">
       <Link href="/" className="absolute top-6 left-6 flex items-center gap-2 text-[13px] font-semibold text-zinc-500 hover:text-zinc-900 transition-colors">
@@ -20,22 +58,50 @@ export default function Register() {
           <p className="text-[13px] text-zinc-500 font-medium">Join to experience blazing fast email.</p>
         </div>
         
-        {/* Manual Register Form Stub */}
-        <form className="space-y-5">
+        {/* Manual Register Form */}
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          {error && <div className="text-red-500 text-[13px] font-medium text-center">{error}</div>}
+          {success && <div className="text-emerald-600 text-[13px] font-medium text-center">{success}</div>}
+          
           <div className="space-y-1.5">
             <label className="block text-[12px] font-bold tracking-widest text-zinc-500 uppercase">Name</label>
-            <input type="text" className="block w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-[14px] text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all" placeholder="Jane Doe" />
+            <input 
+              type="text" 
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="block w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-[14px] text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all" 
+              placeholder="Jane Doe" 
+              required
+            />
           </div>
           <div className="space-y-1.5">
             <label className="block text-[12px] font-bold tracking-widest text-zinc-500 uppercase">Email</label>
-            <input type="email" className="block w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-[14px] text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all" placeholder="you@example.com" />
+            <input 
+              type="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="block w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-[14px] text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all" 
+              placeholder="you@example.com" 
+              required
+            />
           </div>
           <div className="space-y-1.5">
             <label className="block text-[12px] font-bold tracking-widest text-zinc-500 uppercase">Password</label>
-            <input type="password" className="block w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-[14px] text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all" placeholder="••••••••" />
+            <input 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="block w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-[14px] text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all" 
+              placeholder="••••••••" 
+              required
+            />
           </div>
-          <button type="button" className="w-full flex justify-center items-center py-2.5 px-4 rounded-full shadow-sm text-[14px] font-semibold text-white bg-zinc-900 hover:bg-zinc-800 focus:outline-none transition-all mt-2">
-            Sign Up
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full flex justify-center items-center py-2.5 px-4 rounded-full shadow-sm text-[14px] font-semibold text-white bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none transition-all mt-2"
+          >
+            {loading ? 'Signing up...' : 'Sign Up'}
           </button>
         </form>
 
