@@ -1,7 +1,17 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
+  // CSRF Protection
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    const origin = req.headers.get('origin');
+    const host = req.headers.get('host');
+
+    if (origin && !origin.includes(host || '')) {
+      return new NextResponse('CSRF Verification Failed.', { status: 403 });
+    }
+  }
+
   const { pathname } = req.nextUrl;
 
   // Static assets and Next.js internals
