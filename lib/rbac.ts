@@ -14,7 +14,7 @@ export function requireRole(allowedRoles: (Role | string)[], handler: Function) 
 
     let user;
     if (payload.userId === 'demo-user') {
-       user = { id: 'demo-user', role: 'FREE', email: 'demo@meridian.com' };
+       user = { id: 'demo-user', role: 'PRO', email: 'demo@meridian.com' };
     } else {
        user = await prisma.user.findUnique({ where: { id: payload.userId } });
     }
