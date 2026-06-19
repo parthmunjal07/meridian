@@ -131,7 +131,7 @@ export default function InboxPage() {
     }
   }, [emails]);
 
-  const handleSend = async (payload: { to: string; subject: string; body: string }) => {
+  const handleSend = async (payload: { to: string; subject: string; body: string; cc?: string; bcc?: string }) => {
     await fetch('/api/emails/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

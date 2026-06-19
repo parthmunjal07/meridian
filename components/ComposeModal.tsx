@@ -1,14 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Mail, Users, PenLine, Sparkles, AtSign } from 'lucide-react';
+import { X, Send, Mail, Users, PenLine, Sparkles } from 'lucide-react';
 
 export interface ComposeModalProps {
   onClose: () => void;
-  onSend: (payload: { to: string; subject: string; body: string }) => Promise<void>;
+  onSend: (payload: { to: string; subject: string; body: string; cc?: string; bcc?: string }) => Promise<void>;
   replyTo?: { to: string; subject: string } | null;
 }
 
 export default function ComposeModal({ onClose, onSend, replyTo }: ComposeModalProps) {
   const [to, setTo] = useState(replyTo?.to || '');
+  const [cc, setCc] = useState('');
+  const [bcc, setBcc] = useState('');
+  const [showCc, setShowCc] = useState(false);
+  const [showBcc, setShowBcc] = useState(false);
   const [subject, setSubject] = useState(replyTo?.subject ? (replyTo.subject.startsWith('Re:') ? replyTo.subject : `Re: ${replyTo.subject}`) : '');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +45,7 @@ export default function ComposeModal({ onClose, onSend, replyTo }: ComposeModalP
     try {
       setIsSending(true);
       setError(null);
-      await onSend({ to, subject, body: bodyText });
+      await onSend({ to, subject, body: bodyText, cc, bcc });
       onClose();
     } catch (err) {
       setError("Failed to send email. Please try again.");
@@ -60,9 +64,9 @@ export default function ComposeModal({ onClose, onSend, replyTo }: ComposeModalP
   };
 
   // Render chips based on comma separated emails
-  const renderChips = () => {
-    if (to && to.includes(',')) {
-      return to.split(',').map(t => t.trim()).filter(Boolean).map((t, i) => (
+  const renderChips = (value: string, onChange: (val: string) => void) => {
+    if (value && value.includes(',')) {
+      return value.split(',').map(t => t.trim()).filter(Boolean).map((t, i) => (
         <div key={i} className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 rounded-full px-3 py-1 mr-2 text-[13px] text-blue-700 font-medium shadow-sm">
           <div className={`w-1.5 h-1.5 rounded-full ${i % 2 === 0 ? 'bg-emerald-500' : 'bg-blue-500'}`} />
           {t}
@@ -70,8 +74,8 @@ export default function ComposeModal({ onClose, onSend, replyTo }: ComposeModalP
             className="text-zinc-500 hover:text-zinc-300 ml-1"
             onClick={(e) => {
               e.stopPropagation();
-              const newTo = to.split(',').map(email => email.trim()).filter(email => email !== t).join(', ');
-              setTo(newTo);
+              const newVal = value.split(',').map(email => email.trim()).filter(email => email !== t).join(', ');
+              onChange(newVal);
             }}
           >
             <X className="w-3 h-3" />
@@ -100,9 +104,8 @@ export default function ComposeModal({ onClose, onSend, replyTo }: ComposeModalP
             </div>
           </div>
           <div className="flex items-center gap-4 text-zinc-500 text-[12px] font-medium font-mono">
-            <button className="hover:text-zinc-900 transition-colors flex items-center gap-1"><AtSign className="w-3.5 h-3.5"/> </button>
-            <button className="hover:text-zinc-900 transition-colors tracking-wide">CC</button>
-            <button className="hover:text-zinc-900 transition-colors tracking-wide">BCC</button>
+            <button onClick={() => setShowCc(!showCc)} className={`hover:text-zinc-900 transition-colors tracking-wide ${showCc ? 'text-zinc-900 font-bold' : ''}`}>CC</button>
+            <button onClick={() => setShowBcc(!showBcc)} className={`hover:text-zinc-900 transition-colors tracking-wide ${showBcc ? 'text-zinc-900 font-bold' : ''}`}>BCC</button>
             <button onClick={onClose} className="hover:text-zinc-900 transition-colors ml-2">
               <X className="h-4 w-4" />
             </button>
@@ -117,22 +120,54 @@ export default function ComposeModal({ onClose, onSend, replyTo }: ComposeModalP
           )}
 
           {/* Recipients */}
-          <div>
-            <div className="flex items-center gap-2 mb-3 px-1 text-zinc-500">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2 mb-1 px-1 text-zinc-500">
               <Users className="w-3.5 h-3.5" />
               <span className="text-[11px] font-bold tracking-[0.15em]">RECIPIENTS</span>
             </div>
+            
             <div className="flex items-center flex-wrap gap-y-2 bg-white border border-zinc-200 shadow-sm rounded-xl px-3 py-2 min-h-[44px] cursor-text" onClick={() => document.getElementById('compose-to')?.focus()}>
-              {renderChips()}
+              <span className="text-[11px] font-bold text-zinc-400 mr-2 w-6">TO</span>
+              {renderChips(to, setTo)}
               <input
                 id="compose-to"
                 type="text"
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
                 className="flex-1 min-w-[150px] bg-transparent text-zinc-900 text-[13px] font-medium focus:outline-none placeholder:text-zinc-400"
-                placeholder="To"
+                placeholder=""
               />
             </div>
+
+            {showCc && (
+              <div className="flex items-center flex-wrap gap-y-2 bg-white border border-zinc-200 shadow-sm rounded-xl px-3 py-2 min-h-[44px] cursor-text" onClick={() => document.getElementById('compose-cc')?.focus()}>
+                <span className="text-[11px] font-bold text-zinc-400 mr-2 w-6">CC</span>
+                {renderChips(cc, setCc)}
+                <input
+                  id="compose-cc"
+                  type="text"
+                  value={cc}
+                  onChange={(e) => setCc(e.target.value)}
+                  className="flex-1 min-w-[150px] bg-transparent text-zinc-900 text-[13px] font-medium focus:outline-none placeholder:text-zinc-400"
+                  placeholder=""
+                />
+              </div>
+            )}
+
+            {showBcc && (
+              <div className="flex items-center flex-wrap gap-y-2 bg-white border border-zinc-200 shadow-sm rounded-xl px-3 py-2 min-h-[44px] cursor-text" onClick={() => document.getElementById('compose-bcc')?.focus()}>
+                <span className="text-[11px] font-bold text-zinc-400 mr-2 w-6">BCC</span>
+                {renderChips(bcc, setBcc)}
+                <input
+                  id="compose-bcc"
+                  type="text"
+                  value={bcc}
+                  onChange={(e) => setBcc(e.target.value)}
+                  className="flex-1 min-w-[150px] bg-transparent text-zinc-900 text-[13px] font-medium focus:outline-none placeholder:text-zinc-400"
+                  placeholder=""
+                />
+              </div>
+            )}
           </div>
 
           {/* Message Area */}
