@@ -1,8 +1,9 @@
 import { getRefreshTokenCookie, verifyToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { redis } from '@/lib/redis';
 import { redirect } from 'next/navigation';
 import { DisconnectButton } from '@/components/DisconnectButton';
-import { Settings, Mail, Calendar as CalendarIcon, CheckCircle2 } from 'lucide-react';
+import { Settings, Mail, Calendar as CalendarIcon, CheckCircle2, Sparkles } from 'lucide-react';
 
 export default async function SettingsPage() {
   const refreshToken = await getRefreshTokenCookie();
@@ -15,6 +16,7 @@ export default async function SettingsPage() {
   if (payload.userId === 'demo-user') {
     user = {
       id: 'demo-user',
+      role: 'PRO',
       gmailConnected: true,
       calendarConnected: true,
     };
@@ -25,6 +27,21 @@ export default async function SettingsPage() {
   }
 
   if (!user) redirect('/login');
+
+  const userRole = user.role || 'FREE';
+  let asksLeft = null;
+  if (userRole === 'FREE') {
+    const today = new Date().toISOString().split('T')[0];
+    const rateLimitKey = `ratelimit:ai:${user.id}:${today}`;
+    try {
+      const requestsStr = await redis.get(rateLimitKey);
+      const requests = requestsStr ? parseInt(requestsStr, 10) : 0;
+      asksLeft = Math.max(0, 5 - requests);
+    } catch (e) {
+      console.error('Failed to get redis rate limit:', e);
+      asksLeft = 5;
+    }
+  }
 
   return (
     <div className="flex-1 bg-[#F9FAFB] h-full overflow-y-auto font-sans">
@@ -114,6 +131,39 @@ export default async function SettingsPage() {
             </div>
           </div>
         </section>
+
+        {/* AI Usage Section (Only for FREE users) */}
+        {userRole === 'FREE' && asksLeft !== null && (
+          <section className="bg-white border border-zinc-200 rounded-[32px] p-8 lg:p-10 shadow-sm">
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-zinc-900 tracking-tight mb-2">Meridian AI</h2>
+              <p className="text-zinc-500 text-[15px]">
+                Your daily limits for the AI assistant.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border border-zinc-100 bg-zinc-50 hover:bg-white transition-colors">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5 text-zinc-50" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-zinc-900 flex items-center gap-3">
+                    Daily Asks
+                  </h3>
+                  <p className="text-sm text-zinc-500 mt-1">You have {asksLeft} ask{asksLeft === 1 ? '' : 's'} remaining today.</p>
+                </div>
+              </div>
+              <div className="shrink-0 mt-4 sm:mt-0">
+                <button
+                  className="inline-flex items-center justify-center px-6 py-2.5 bg-zinc-900 text-white text-[15px] font-semibold rounded-full hover:bg-zinc-800 transition-colors shadow-sm"
+                >
+                  Upgrade to Pro
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Shortcuts Section */}
         <section className="bg-white border border-zinc-200 rounded-[32px] p-8 lg:p-10 shadow-sm">
