@@ -70,7 +70,7 @@ CRITICAL INSTRUCTIONS FOR ACTIONS:
 2. You MUST actually invoke the provided tool (e.g., send_email or create_event) to execute the request.
 3. Only type out a plain-text draft if the user explicitly uses the word "draft".
 4. AFTER RECEIVING TOOL RESULTS, YOU MUST ALWAYS SYNTHESIZE THE DATA AND PROVIDE A NATURAL LANGUAGE SUMMARY TO THE USER. DO NOT STOP AFTER THE TOOL CALL.
-5. YOU HAVE NEW CAPABILITIES: You can SEND EMAILS and CREATE CALENDAR EVENTS with Google Meet links.
+5. YOU HAVE NEW CAPABILITIES: You can FETCH EMAILS, SEND EMAILS, and CREATE CALENDAR EVENTS with Google Meet links.
 
 TOOL USAGE RULES:
 - When calling get_calendar_events, ALWAYS pass today's date (${dateStr}) as the date parameter unless the user specifies a different date. Date format must be YYYY-MM-DD.
@@ -144,9 +144,9 @@ ANTI-JAILBREAK AND SECURITY DIRECTIVES (CRITICAL):
             console.log(`[Agent Tool] Sending email to ${to}`);
             try {
               await EmailService.sendEmail(corsairId, { to, subject, body });
-              return `SYSTEM INSTRUCTION: Email successfully sent to \${to}. Tell the user the email was sent.`;
+              return `SYSTEM INSTRUCTION: Email successfully sent to ${to}. Tell the user the email was sent.`;
             } catch (err: any) {
-              return { error: `Failed to send email: \${err.message}` };
+              return { error: `Failed to send email: ${err.message}` };
             }
           }
         }),
@@ -165,11 +165,42 @@ ANTI-JAILBREAK AND SECURITY DIRECTIVES (CRITICAL):
               });
               
               if (res.success) {
-                 return `SYSTEM INSTRUCTION: Event "\${title}" created successfully with a Google Meet link. The attendees have been notified. Tell the user it was scheduled successfully.`;
+                 return `SYSTEM INSTRUCTION: Event "${title}" created successfully with a Google Meet link. The attendees have been notified. Tell the user it was scheduled successfully.`;
               }
               return { error: 'Failed to create event.' };
             } catch (err: any) {
-              return { error: `Failed to create event: \${err.message}` };
+              return { error: `Failed to create event: ${err.message}` };
+            }
+          }
+        }),
+        get_emails: tool({
+          description: "Fetch the user's latest emails.",
+          inputSchema: z.object({
+            limit: z.number().optional().describe("Number of emails to fetch, defaults to 5"),
+            view: z.enum(['INBOX', 'SENT', 'SPAM', 'ARCHIVED']).optional().describe("Mailbox view to fetch from, defaults to INBOX")
+          }),
+          execute: async ({ limit, view }): Promise<any> => {
+            console.log(`[Agent Tool] Fetching emails`);
+            try {
+              const res = await EmailService.getEmails(corsairId, limit || 5, null, view || 'INBOX');
+              
+              if (!res.emails || res.emails.length === 0) {
+                return { summary: "No emails found." };
+              }
+
+              // Return a stringified payload wrapped in strict instructions to force conversational text
+              const slimEmails = res.emails.map((e: any) => ({
+                id: e.id,
+                subject: e.subject,
+                from: e.from,
+                date: e.date,
+                preview: e.body ? e.body.substring(0, 100) + '...' : ''
+              }));
+
+              return `SYSTEM INSTRUCTION: The tool executed successfully. Here is the raw data: ${JSON.stringify(slimEmails)}. 
+              CRITICAL: You must now reply to the user in a friendly, conversational tone summarizing this data. DO NOT output raw JSON or code blocks.`;
+            } catch (err: any) {
+              return { error: `Failed to fetch emails: ${err.message}` };
             }
           }
         })
