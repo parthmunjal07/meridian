@@ -24,6 +24,12 @@
       "sourceType": "github",
       "skillPath": "templates/skills/ui-ux-pro-max/SKILL.md",
       "computedHash": "edb95a23d48c890da63aed03e51d4730ebb79942f275fb953fae18401be84271"
+    },
+    "web-typography": {
+      "source": "wondelai/skills",
+      "sourceType": "github",
+      "skillPath": "web-typography/SKILL.md",
+      "computedHash": "f5843942cd3c22ad0d68046d08120fb2be56ce74423053f0527cd21a1467c17d"
     }
   }
 }

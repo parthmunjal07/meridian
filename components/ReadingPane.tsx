@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DOMPurify from 'isomorphic-dompurify';
-import { Archive, Trash2, Reply, Forward, Send, Bot, CalendarPlus, ListChecks, SlidersHorizontal, MoreHorizontal, CircleAlert, CircleCheck, X, ChevronLeft } from 'lucide-react';
+import { Archive, Trash2, Reply, Forward, Send, Bot, CalendarPlus, ListChecks, SlidersHorizontal, MoreHorizontal, CircleAlert, CircleCheck, CheckCircle2, X, ChevronLeft } from 'lucide-react';
 import { format } from 'date-fns';
 
 export interface ReadingPaneProps {
@@ -32,16 +32,18 @@ export default function ReadingPane({ email, onArchive, onDelete, onReply, onClo
     setIsDecisionLogOpen(false);
     setDecisionLog(null);
     setSmartChips(null);
-    
-    if (email?.id) {
-      setIsSmartChipsLoading(true);
-      fetch(`/api/emails/${email.id}/smart-chips`)
-        .then(res => res.json())
-        .then(data => setSmartChips(data))
-        .catch(err => console.error(err))
-        .finally(() => setIsSmartChipsLoading(false));
-    }
+    setIsSmartChipsLoading(false);
   }, [email?.id]);
+
+  const analyzeContext = () => {
+    if (!email?.id) return;
+    setIsSmartChipsLoading(true);
+    fetch(`/api/emails/${email.id}/smart-chips`)
+      .then(res => res.json())
+      .then(data => setSmartChips(data))
+      .catch(err => console.error(err))
+      .finally(() => setIsSmartChipsLoading(false));
+  };
 
   const toggleDecisionLog = async () => {
     if (!isDecisionLogOpen) {
@@ -262,12 +264,23 @@ export default function ReadingPane({ email, onArchive, onDelete, onReply, onClo
 
           {/* Smart Chips */}
           <div className="flex flex-wrap gap-3 mb-10 min-h-[40px]">
+            {!smartChips && !isSmartChipsLoading && (
+              <button 
+                onClick={analyzeContext}
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-zinc-700 bg-white hover:bg-zinc-50 border border-zinc-200 shadow-sm rounded-xl transition-colors"
+              >
+                <Bot className="w-4 h-4 text-zinc-500" />
+                Analyze Context
+              </button>
+            )}
+
             {isSmartChipsLoading && (
-              <div className="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-zinc-500 bg-zinc-50 border border-zinc-200 rounded-xl">
+              <div className="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-zinc-500 bg-zinc-50 border border-zinc-200 shadow-sm rounded-xl">
                 <div className="w-4 h-4 rounded-full border-2 border-zinc-400 border-t-transparent animate-spin" />
                 Analyzing context...
               </div>
             )}
+            
             {!isSmartChipsLoading && smartChips?.hasMeeting && (
               <button onClick={() => alert('Calendar integration ready via Corsair!')} className="inline-flex items-center gap-2 px-4 py-2.5 text-[13px] font-bold text-zinc-700 bg-white hover:bg-zinc-50 border border-zinc-200 shadow-sm rounded-xl transition-colors">
                 <CalendarPlus className="w-4 h-4 text-[#1E4C82]" />
@@ -276,6 +289,12 @@ export default function ReadingPane({ email, onArchive, onDelete, onReply, onClo
                   <span className="text-zinc-500 font-medium ml-1 bg-zinc-100 px-2 py-0.5 rounded-md">{smartChips.suggestedTime}</span>
                 )}
               </button>
+            )}
+
+            {!isSmartChipsLoading && smartChips && !smartChips.hasMeeting && (
+               <div className="inline-flex items-center gap-2 px-4 py-2.5 text-[13px] font-medium text-zinc-500 bg-zinc-50 border border-zinc-200 shadow-sm rounded-xl">
+                 <CheckCircle2 className="w-4 h-4" /> No specific actions found
+               </div>
             )}
           </div>
 

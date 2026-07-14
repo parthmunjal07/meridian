@@ -65,32 +65,31 @@ export default async function SettingsPage() {
             </p>
           </div>
 
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            
             {/* Gmail Integration */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border border-zinc-100 bg-zinc-50 hover:bg-white transition-colors">
-              <div className="flex items-start gap-4">
+            <div className="flex flex-col p-6 rounded-[2rem] border border-orange-100/50 bg-orange-50/50 hover:bg-orange-50 transition-colors h-full">
+              <div className="flex items-start justify-between mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-[#FFE2D1] border border-[#FFCFAE] flex items-center justify-center shrink-0">
                   <Mail className="w-6 h-6 text-[#85451C]" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-zinc-900 flex items-center gap-3">
-                    Gmail
-                    {user.gmailConnected && (
-                      <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider bg-[#BCF0C8] text-[#1A5C2B] px-3 py-1 rounded-full border border-[#A3E8B3]">
-                        <CheckCircle2 className="w-3 h-3" /> Connected
-                      </span>
-                    )}
-                  </h3>
-                  <p className="text-sm text-zinc-500 mt-1">Sync your inbox and manage your emails securely.</p>
-                </div>
+                {user.gmailConnected && (
+                  <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider bg-[#BCF0C8] text-[#1A5C2B] px-3 py-1 rounded-full border border-[#A3E8B3]">
+                    <CheckCircle2 className="w-3 h-3" /> Connected
+                  </span>
+                )}
               </div>
-              <div className="shrink-0 mt-4 sm:mt-0">
+              <div className="flex-1 mb-6">
+                <h3 className="text-lg font-semibold text-zinc-900 mb-1">Gmail</h3>
+                <p className="text-sm text-zinc-500">Sync your inbox and manage your emails securely.</p>
+              </div>
+              <div className="mt-auto">
                 {user.gmailConnected ? (
                   <DisconnectButton integration="gmail" label="Gmail" />
                 ) : (
                   <a
                     href="/api/auth/connect/gmail"
-                    className="inline-flex items-center justify-center px-6 py-2.5 bg-zinc-900 text-white text-[15px] font-semibold rounded-full hover:bg-zinc-800 transition-colors shadow-sm"
+                    className="flex items-center justify-center w-full px-6 py-2.5 bg-zinc-900 text-white text-[15px] font-semibold rounded-full hover:bg-zinc-800 transition-colors shadow-sm"
                   >
                     Connect
                   </a>
@@ -99,30 +98,28 @@ export default async function SettingsPage() {
             </div>
 
             {/* Google Calendar Integration */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border border-zinc-100 bg-zinc-50 hover:bg-white transition-colors">
-              <div className="flex items-start gap-4">
+            <div className="flex flex-col p-6 rounded-[2rem] border border-blue-100/50 bg-blue-50/50 hover:bg-blue-50 transition-colors h-full">
+              <div className="flex items-start justify-between mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-[#CBE4FF] border border-[#B4D7FF] flex items-center justify-center shrink-0">
                   <CalendarIcon className="w-6 h-6 text-[#1E4C82]" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-zinc-900 flex items-center gap-3">
-                    Google Calendar
-                    {user.calendarConnected && (
-                      <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider bg-[#BCF0C8] text-[#1A5C2B] px-3 py-1 rounded-full border border-[#A3E8B3]">
-                        <CheckCircle2 className="w-3 h-3" /> Connected
-                      </span>
-                    )}
-                  </h3>
-                  <p className="text-sm text-zinc-500 mt-1">See your schedule alongside your emails and plan ahead.</p>
-                </div>
+                {user.calendarConnected && (
+                  <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider bg-[#BCF0C8] text-[#1A5C2B] px-3 py-1 rounded-full border border-[#A3E8B3]">
+                    <CheckCircle2 className="w-3 h-3" /> Connected
+                  </span>
+                )}
               </div>
-              <div className="shrink-0 mt-4 sm:mt-0">
+              <div className="flex-1 mb-6">
+                <h3 className="text-lg font-semibold text-zinc-900 mb-1">Google Calendar</h3>
+                <p className="text-sm text-zinc-500">See your schedule alongside your emails and plan ahead.</p>
+              </div>
+              <div className="mt-auto">
                 {user.calendarConnected ? (
                   <DisconnectButton integration="calendar" label="Calendar" />
                 ) : (
                   <a
                     href="/api/auth/connect/calendar"
-                    className="inline-flex items-center justify-center px-6 py-2.5 bg-zinc-900 text-white text-[15px] font-semibold rounded-full hover:bg-zinc-800 transition-colors shadow-sm"
+                    className="flex items-center justify-center w-full px-6 py-2.5 bg-zinc-900 text-white text-[15px] font-semibold rounded-full hover:bg-zinc-800 transition-colors shadow-sm"
                   >
                     Connect
                   </a>
@@ -131,69 +128,63 @@ export default async function SettingsPage() {
             </div>
 
             {/* Slack Integration (Coming Soon) */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border border-zinc-100 bg-zinc-50 hover:bg-white transition-colors opacity-60 grayscale-[0.5]">
-              <div className="flex items-start gap-4">
+            <div className="flex flex-col p-6 rounded-[2rem] border border-purple-100/50 bg-purple-50/30 hover:bg-purple-50 transition-colors h-full opacity-70 grayscale-[0.3]">
+              <div className="flex items-start justify-between mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-[#E8E1ED] border border-[#D6CBE0] flex items-center justify-center shrink-0">
                   <Hash className="w-6 h-6 text-[#4A154B]" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-zinc-900 flex items-center gap-3">
-                    Slack
-                    <span className="text-[11px] font-bold uppercase tracking-wider bg-zinc-200 text-zinc-600 px-3 py-1 rounded-full border border-zinc-300">
-                      Coming Soon
-                    </span>
-                  </h3>
-                  <p className="text-sm text-zinc-500 mt-1">Connect your workspace and let the AI manage your messages.</p>
-                </div>
+                <span className="text-[11px] font-bold uppercase tracking-wider bg-zinc-200 text-zinc-600 px-3 py-1 rounded-full border border-zinc-300">
+                  Coming Soon
+                </span>
               </div>
-              <div className="shrink-0 mt-4 sm:mt-0">
-                <button disabled className="inline-flex items-center justify-center px-6 py-2.5 bg-zinc-200 text-zinc-500 text-[15px] font-semibold rounded-full cursor-not-allowed">
+              <div className="flex-1 mb-6">
+                <h3 className="text-lg font-semibold text-zinc-900 mb-1">Slack</h3>
+                <p className="text-sm text-zinc-500">Connect your workspace and let the AI manage your messages.</p>
+              </div>
+              <div className="mt-auto">
+                <button disabled className="flex items-center justify-center w-full px-6 py-2.5 bg-zinc-200 text-zinc-500 text-[15px] font-semibold rounded-full cursor-not-allowed">
                   Connect
                 </button>
               </div>
             </div>
 
             {/* Linear Integration (Coming Soon) */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border border-zinc-100 bg-zinc-50 hover:bg-white transition-colors opacity-60 grayscale-[0.5]">
-              <div className="flex items-start gap-4">
+            <div className="flex flex-col p-6 rounded-[2rem] border border-indigo-100/50 bg-indigo-50/30 hover:bg-indigo-50 transition-colors h-full opacity-70 grayscale-[0.3]">
+              <div className="flex items-start justify-between mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-[#EAEAF2] border border-[#D5D5E8] flex items-center justify-center shrink-0">
                   <ListTodo className="w-6 h-6 text-[#5E6AD2]" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-zinc-900 flex items-center gap-3">
-                    Linear
-                    <span className="text-[11px] font-bold uppercase tracking-wider bg-zinc-200 text-zinc-600 px-3 py-1 rounded-full border border-zinc-300">
-                      Coming Soon
-                    </span>
-                  </h3>
-                  <p className="text-sm text-zinc-500 mt-1">Manage issues, projects, and cycles seamlessly from Meridian.</p>
-                </div>
+                <span className="text-[11px] font-bold uppercase tracking-wider bg-zinc-200 text-zinc-600 px-3 py-1 rounded-full border border-zinc-300">
+                  Coming Soon
+                </span>
               </div>
-              <div className="shrink-0 mt-4 sm:mt-0">
-                <button disabled className="inline-flex items-center justify-center px-6 py-2.5 bg-zinc-200 text-zinc-500 text-[15px] font-semibold rounded-full cursor-not-allowed">
+              <div className="flex-1 mb-6">
+                <h3 className="text-lg font-semibold text-zinc-900 mb-1">Linear</h3>
+                <p className="text-sm text-zinc-500">Manage issues, projects, and cycles seamlessly from Meridian.</p>
+              </div>
+              <div className="mt-auto">
+                <button disabled className="flex items-center justify-center w-full px-6 py-2.5 bg-zinc-200 text-zinc-500 text-[15px] font-semibold rounded-full cursor-not-allowed">
                   Connect
                 </button>
               </div>
             </div>
 
             {/* Tavily Integration (Coming Soon) */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border border-zinc-100 bg-zinc-50 hover:bg-white transition-colors opacity-60 grayscale-[0.5]">
-              <div className="flex items-start gap-4">
+            <div className="flex flex-col p-6 rounded-[2rem] border border-sky-100/50 bg-sky-50/30 hover:bg-sky-50 transition-colors h-full opacity-70 grayscale-[0.3]">
+              <div className="flex items-start justify-between mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center shrink-0">
                   <Globe className="w-6 h-6 text-[#0284C7]" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-zinc-900 flex items-center gap-3">
-                    Tavily Search
-                    <span className="text-[11px] font-bold uppercase tracking-wider bg-zinc-200 text-zinc-600 px-3 py-1 rounded-full border border-zinc-300">
-                      Coming Soon
-                    </span>
-                  </h3>
-                  <p className="text-sm text-zinc-500 mt-1">Supercharge your AI assistant with real-time web search capabilities.</p>
-                </div>
+                <span className="text-[11px] font-bold uppercase tracking-wider bg-zinc-200 text-zinc-600 px-3 py-1 rounded-full border border-zinc-300">
+                  Coming Soon
+                </span>
               </div>
-              <div className="shrink-0 mt-4 sm:mt-0">
-                <button disabled className="inline-flex items-center justify-center px-6 py-2.5 bg-zinc-200 text-zinc-500 text-[15px] font-semibold rounded-full cursor-not-allowed">
+              <div className="flex-1 mb-6">
+                <h3 className="text-lg font-semibold text-zinc-900 mb-1">Tavily Search</h3>
+                <p className="text-sm text-zinc-500">Supercharge your AI assistant with real-time web search capabilities.</p>
+              </div>
+              <div className="mt-auto">
+                <button disabled className="flex items-center justify-center w-full px-6 py-2.5 bg-zinc-200 text-zinc-500 text-[15px] font-semibold rounded-full cursor-not-allowed">
                   Connect
                 </button>
               </div>

@@ -59,7 +59,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto py-2 px-3">
+      <div className="flex-1 overflow-y-auto py-2 px-3 flex flex-col">
         <nav className="space-y-1">
           {navigation.map((item) => {
             const isActive = pathname.startsWith(item.href);
@@ -83,6 +83,23 @@ export default function Sidebar() {
             );
           })}
         </nav>
+
+        {/* Graphic Card */}
+        <div className="mt-auto pt-8 pb-2">
+          <div className="bg-gradient-to-b from-slate-50 to-slate-100/80 border border-slate-200/60 rounded-2xl p-5 overflow-hidden relative flex flex-col gap-2 shadow-sm">
+            <h4 className="text-[14px] font-bold text-slate-900 leading-tight tracking-tight">Focus. Flow. Finish.</h4>
+            <p className="text-[12px] text-slate-500 leading-relaxed z-10 relative mb-2">
+              Your executive assistant for a seamless day.
+            </p>
+            <div className="-mx-5 -mb-5 relative flex justify-center">
+              <img 
+                src="/sidebar-graphic.png" 
+                alt="Assistant graphic" 
+                className="w-full h-auto object-cover opacity-90 mix-blend-multiply transition-transform hover:scale-105 duration-700 ease-out" 
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* User */}

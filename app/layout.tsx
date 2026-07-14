@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Syne_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/hooks/useAuth";
 
 const inter = Inter({
   variable: "--font-sans",
-  subsets: ["latin"],
-});
-
-const syneMono = Syne_Mono({
-  weight: "400",
-  variable: "--font-syne-mono",
   subsets: ["latin"],
 });
 
@@ -27,9 +21,9 @@ export default function RootLayout({
   return (
       <html
         lang="en"
-        className={`${inter.variable} ${syneMono.variable} h-full antialiased`}
+        className={`${inter.variable} h-full antialiased`}
       >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-white text-zinc-900 selection:bg-blue-100 selection:text-blue-900">
         <AuthProvider>
           {children}
         </AuthProvider>
