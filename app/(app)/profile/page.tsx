@@ -161,7 +161,7 @@ export default function ProfilePage() {
         {/* User Identity Card */}
         <section className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
           {/* Header Banner */}
-          <div className="h-28 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 relative overflow-hidden">
+          <div className="h-28 relative overflow-hidden">
             <div
               className="absolute inset-0 opacity-15"
               style={{
