@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Inbox, Calendar, Bot, Settings, List, LogOut, LayoutGrid } from 'lucide-react';
+import { Inbox, Calendar, Bot, Settings, List, LogOut, LayoutGrid, UserCircle2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function Sidebar() {
@@ -16,6 +16,7 @@ export default function Sidebar() {
     { name: 'Digest', href: '/digest', icon: List },
     { name: 'Agent', href: '/agent', icon: Bot },
     { name: 'Settings', href: '/settings', icon: Settings },
+    { name: 'Profile', href: '/profile', icon: UserCircle2 },
   ];
 
   // Extract user initials
