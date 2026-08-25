@@ -161,7 +161,7 @@ export default function ProfilePage() {
         {/* User Identity Card */}
         <section className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
           {/* Header Banner */}
-          <div className="h-28 relative overflow-hidden">
+          <div className="h-28 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 relative overflow-hidden">
             <div
               className="absolute inset-0 opacity-15"
               style={{
@@ -190,7 +190,9 @@ export default function ProfilePage() {
                     <h2 className="text-[20px] font-bold text-zinc-900 tracking-tight truncate leading-snug">
                       {user?.name || 'Unnamed User'}
                     </h2>
-                    <BadgeCheck className="w-5 h-5 text-blue-600 shrink-0" title="Verified Account" />
+                    <span title="Verified Account" className="inline-flex">
+                      <BadgeCheck className="w-5 h-5 text-blue-600 shrink-0" />
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[13px] text-zinc-500 font-medium truncate">
