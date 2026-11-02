@@ -1,5 +1,6 @@
 import { getCorsairClient } from '@/lib/corsair';
 import { prisma } from "@/lib/prisma";
+import { extractGmailContent } from '@/lib/gmail-message';
 
 export class EmailService {
   /**
@@ -11,6 +12,34 @@ export class EmailService {
       if (user?.corsairUserId) return user.corsairUserId;
     }
     return corsairUserId;
+  }
+
+  /**
+   * Fetch the complete Gmail MIME payload for the reading pane.
+   * The synced DB entity intentionally stores a flattened text body, so rich
+   * HTML is loaded on demand instead of making every inbox row hit Gmail.
+   */
+  static async getEmail(corsairUserId: string, emailId: string) {
+    const finalCorsairId = await this.resolveCorsairId(corsairUserId);
+    const t = await getCorsairClient(finalCorsairId);
+    const message = await t.gmail.api.messages.get({ id: emailId, format: 'full' });
+    const headers = message.payload?.headers || [];
+    const getHeader = (name: string) =>
+      headers.find((header) => header.name?.toLowerCase() === name.toLowerCase())?.value;
+    const content = extractGmailContent(message.payload, message.snippet || '');
+
+    return {
+      id: message.id || emailId,
+      subject: getHeader('subject') || '(No Subject)',
+      body: content.body,
+      bodyType: content.bodyType,
+      attachments: content.attachments,
+      from: getHeader('from') || 'Unknown',
+      to: getHeader('to') || 'Me',
+      cc: getHeader('cc') || undefined,
+      date: message.internalDate ? new Date(message.internalDate) : new Date(),
+      isRead: !(message.labelIds || []).includes('UNREAD'),
+    };
   }
 
   /**
@@ -69,8 +98,7 @@ export class EmailService {
               from: dbRow.from || 'Unknown',
               to: dbRow.to || 'Me',
               date: dbRow.internalDate ? new Date(typeof dbRow.internalDate === 'string' ? parseInt(dbRow.internalDate) : dbRow.internalDate) : (dbRow.createdAt ? new Date(dbRow.createdAt) : new Date()),
-              isRead: dbRow.labelIds ? !dbRow.labelIds.includes('UNREAD') : true,
-              priorityLevel: 'Normal'
+              isRead: dbRow.labelIds ? !dbRow.labelIds.includes('UNREAD') : true
             };
           }
 
@@ -87,8 +115,7 @@ export class EmailService {
               from: getHeader('from') || (apiMsg as any).from || 'Unknown',
               to: getHeader('to') || (apiMsg as any).to || 'Me',
               date: apiMsg.internalDate ? new Date(typeof apiMsg.internalDate === 'string' ? parseInt(apiMsg.internalDate) : apiMsg.internalDate) : new Date(),
-              isRead: !((apiMsg.labelIds || []).includes('UNREAD')),
-              priorityLevel: 'Normal'
+              isRead: !((apiMsg.labelIds || []).includes('UNREAD'))
             };
           } catch (err: any) {
             console.error("Error fetching msg:", m.id, err.message);
@@ -217,8 +244,7 @@ export class EmailService {
               from: dbRow.from || 'Unknown',
               to: dbRow.to || 'Me',
               date: dbRow.internalDate ? new Date(typeof dbRow.internalDate === 'string' ? parseInt(dbRow.internalDate) : dbRow.internalDate) : (dbRow.createdAt ? new Date(dbRow.createdAt) : new Date()),
-              isRead: dbRow.labelIds ? !dbRow.labelIds.includes('UNREAD') : true,
-              priorityLevel: 'Normal'
+              isRead: dbRow.labelIds ? !dbRow.labelIds.includes('UNREAD') : true
             };
           }
 
@@ -234,8 +260,7 @@ export class EmailService {
               from: getHeader('from') || (apiMsg as any).from || 'Unknown',
               to: getHeader('to') || (apiMsg as any).to || 'Me',
               date: apiMsg.internalDate ? new Date(typeof apiMsg.internalDate === 'string' ? parseInt(apiMsg.internalDate) : apiMsg.internalDate) : new Date(),
-              isRead: !((apiMsg.labelIds || []).includes('UNREAD')),
-              priorityLevel: 'Normal'
+              isRead: !((apiMsg.labelIds || []).includes('UNREAD'))
             };
           } catch (err: any) {
             console.error("Error fetching msg:", m.id, err.message);

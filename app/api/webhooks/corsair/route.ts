@@ -54,8 +54,7 @@ export async function POST(req: Request) {
           from: emailData.from || getHeader('from') || 'Unknown',
           to: emailData.to || getHeader('to') || 'Me',
           date: emailData.date || emailData.internalDate ? new Date(parseInt(emailData.internalDate)) : new Date().toISOString(),
-          isRead: !((emailData.labelIds || []).includes('UNREAD')),
-          priorityLevel: 'Normal'
+          isRead: !((emailData.labelIds || []).includes('UNREAD'))
         };
 
         const channel = `user:${tenantId}:emails`;

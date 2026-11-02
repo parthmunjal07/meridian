@@ -50,7 +50,6 @@ async function main() {
   // Clear existing emails (optional, but good for clean seed)
   await prisma.email.deleteMany({ where: { userId: user.id } });
 
-  const priorities = ['High', 'Normal', 'Low', null];
   const senders = [
     { name: 'Alice Smith', email: 'alice@example.com' },
     { name: 'Bob Jones', email: 'bob@example.com' },
@@ -66,7 +65,6 @@ async function main() {
     const sender = senders[i % senders.length];
     // Spread dates over the last 30 days
     const date = new Date(now.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000);
-    const priorityLevel = priorities[Math.floor(Math.random() * priorities.length)];
     const isRead = Math.random() > 0.3; // 70% chance of being read
 
     emailsToCreate.push({
@@ -77,7 +75,6 @@ async function main() {
       from: `${sender.name} <${sender.email}>`,
       to: user.email,
       date,
-      priorityLevel,
       isRead,
     });
   }

@@ -60,7 +60,6 @@ The application features an extensive REST API backend[cite: 5].
     *   `/[id]/archive/route.ts`: Archiving specific emails[cite: 5].
     *   `/[id]/delete/route.ts`: Trashing specific emails[cite: 5].
     *   `/[id]/smart-chips/route.ts`: Generating contextual smart chips for messages[cite: 5].
-    *   `/[id]/decision-log/route.ts`: Tracking AI decisions on specific emails[cite: 5].
     *   `/search/route.ts`: Searching the inbox[cite: 5].
     *   `/send/route.ts`: Dispatching outgoing emails[cite: 5].
 *   **AI & System APIs**[cite: 5]:

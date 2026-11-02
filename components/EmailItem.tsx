@@ -1,6 +1,5 @@
-import { format, isToday } from 'date-fns';
-import { Calendar, Sparkles, Check, CheckSquare } from 'lucide-react';
-import React, { useState } from 'react';
+import { format, formatDistanceToNow, isThisYear, isToday } from 'date-fns';
+import { Paperclip } from 'lucide-react';
 
 interface Email {
   id: string;
@@ -8,130 +7,134 @@ interface Email {
   body: string;
   from: string;
   date: string;
-  priorityLevel: string | null;
   isRead: boolean;
+  attachments?: Array<{
+    filename?: string;
+    name?: string;
+  }>;
 }
 
-export default function EmailItem({ email, isSelected }: { email: Email; isSelected?: boolean }) {
-  const [isSummaryVisible, setIsSummaryVisible] = useState(true);
-
+export default function EmailItem({
+  email,
+  isSelected,
+  onSelect,
+}: {
+  email: Email;
+  isSelected?: boolean;
+  onSelect: () => void;
+}) {
   // Extract name and initials
   const senderMatch = email.from.match(/^([^<]+)</);
   const senderName = senderMatch ? senderMatch[1].trim() : email.from;
-  const initials = senderName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
+  const initials =
+    senderName
+      .split(/\s+/)
+      .map((name) => name[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || 'U';
 
   // Format date
   const emailDate = new Date(email.date);
-  const timeString = isToday(emailDate) ? format(emailDate, 'h:mm a') : format(emailDate, 'MMM d');
+  const relativeTime = formatDistanceToNow(emailDate, { addSuffix: true })
+    .replace('less than a minute ago', 'Just now')
+    .replace(/^about /, '')
+    .replace(/ minutes? ago$/, ' min ago');
+  const timeString = isToday(emailDate)
+    ? relativeTime
+    : format(emailDate, isThisYear(emailDate) ? 'MMM d' : 'MMM d, yyyy');
 
   // Preview logic
-  const previewText = email.body.replace(/<[^>]*>/g, '').slice(0, 150);
-  
-  // Fake logo assignment for UI showcase based on sender name length
-  const getAvatarStyle = () => {
-    const len = senderName.length;
-    if (len % 4 === 0) return { bg: 'bg-red-600', text: 'text-white' };
-    if (len % 4 === 1) return { bg: 'bg-blue-600', text: 'text-white' };
-    if (len % 4 === 2) return { bg: 'bg-green-200', text: 'text-green-700' };
-    return { bg: 'bg-zinc-800', text: 'text-white' };
-  };
-  const avatarStyle = getAvatarStyle();
+  const previewText = email.body
+    .replace(/<[^>]*>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 150);
+  const attachments = (email.attachments || [])
+    .map((attachment) => attachment.filename || attachment.name)
+    .filter((name): name is string => Boolean(name));
 
-  // Mock AI summary data specific to the request
-  const isWebinar = senderName.toLowerCase().includes('scaler') || email.subject.toLowerCase().includes('webinar');
-  const isInvite = email.subject.toLowerCase().includes('invite');
-  const hasActionCard = isWebinar || isInvite || email.priorityLevel === 'URGENT';
-
-  let mockSummary = '';
-  let actionButton = 'Add to Calendar';
-  let isAdded = false;
-
-  if (isWebinar) {
-    mockSummary = "Reminder for today's 4PM webinar on scaling strategies. Zoom link and session agenda included.";
-  } else if (isInvite) {
-    mockSummary = "You're invited to an exclusive event. Come mingle, share insights, and hear mini-pitches.";
-    actionButton = 'Added to Calendar';
-    isAdded = true;
-  } else if (email.priorityLevel === 'URGENT') {
-    mockSummary = "This email requires your immediate attention regarding project blocking issues.";
-  }
+  const avatarStyles = [
+    'bg-mail-avatar-sand text-mail-avatar-sand-ink',
+    'bg-mail-avatar-slate text-mail-avatar-slate-ink',
+    'bg-mail-avatar-lilac text-mail-avatar-lilac-ink',
+    'bg-mail-avatar-sage text-mail-avatar-sage-ink',
+    'bg-mail-avatar-rose text-mail-avatar-rose-ink',
+  ];
+  const avatarIndex =
+    [...senderName].reduce((total, character) => total + character.charCodeAt(0), 0) %
+    avatarStyles.length;
 
   return (
-    <div
-      className={`px-5 py-4 cursor-pointer transition-colors border-b border-zinc-100 flex gap-4 ${
-        isSelected ? 'bg-zinc-50/80' : 'hover:bg-zinc-50'
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={isSelected}
+      className={`group grid w-full grid-cols-[40px_minmax(0,1fr)] gap-3 border-b border-mail-line px-4 py-4 text-left transition-colors focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-mail-primary sm:px-5 ${
+        isSelected ? 'bg-mail-muted' : 'bg-mail-canvas hover:bg-mail-muted/70'
       }`}
     >
-      {/* Checkbox (mock) */}
-      <div className="mt-1 flex-shrink-0">
-        <div className="w-4 h-4 rounded-md border border-zinc-300 flex items-center justify-center hover:border-zinc-400 transition-colors"></div>
+      <div
+        aria-hidden="true"
+        className={`flex h-10 w-10 items-center justify-center rounded-xl text-[11px] font-bold tracking-[-0.02em] ${avatarStyles[avatarIndex]}`}
+      >
+        {initials}
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-start mb-0.5">
-          <div className="flex items-center gap-2">
-            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm ${avatarStyle.bg} ${avatarStyle.text}`}>
-              {initials}
-            </div>
-            <span className={`text-[15px] truncate flex items-center gap-2 ${
-              email.isRead ? 'text-zinc-600 font-medium' : 'text-zinc-900 font-bold'
-            }`}>
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <span
+              className={`truncate text-[13px] tracking-[-0.01em] ${email.isRead ? 'font-medium text-mail-primary' : 'font-semibold text-mail-primary'}`}
+            >
               {senderName}
-              {!email.isRead && <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>}
             </span>
+            {!email.isRead && (
+              <>
+                <span
+                  aria-hidden="true"
+                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-mail-unread"
+                />
+                <span className="sr-only">Unread</span>
+              </>
+            )}
           </div>
-          <span className="text-[12px] text-zinc-500 font-medium shrink-0 pt-0.5">
+          <span className="shrink-0 text-[11px] font-medium tabular-nums text-mail-secondary">
             {timeString}
           </span>
         </div>
 
-        <p className={`text-[14px] truncate mb-1 pl-9 ${
-          email.isRead ? 'text-zinc-600' : 'text-zinc-900 font-semibold'
-        }`}>
+        <p
+          className={`mt-0.5 truncate text-[14px] tracking-[-0.01em] ${
+            email.isRead ? 'font-medium text-mail-primary' : 'font-semibold text-mail-primary'
+          }`}
+        >
           {email.subject}
         </p>
 
-        <p className="text-[13px] text-zinc-500 line-clamp-2 leading-relaxed pl-9 mb-3">
-          {previewText}
+        <p className="mt-1 truncate text-[12px] leading-5 text-mail-secondary">
+          {previewText || 'No preview available'}
         </p>
 
-        {hasActionCard && isSummaryVisible && (
-          <div className="pl-9 pr-4 mb-3">
-            <div className="bg-[#F3F4F9] border border-[#E5E7EB]/50 rounded-xl p-3 shadow-sm">
-              <div className="flex items-start gap-2">
-                <Sparkles className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-                <p className="text-[13px] text-blue-900/80 font-medium leading-relaxed">
-                  {mockSummary}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {hasActionCard && (
-          <div className="pl-9 flex items-center gap-2 mt-2">
-            <button 
-              onClick={(e) => { e.stopPropagation(); setIsSummaryVisible(!isSummaryVisible); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors shadow-sm bg-white"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              {isSummaryVisible ? 'Hide Summary' : 'View Summary'}
-            </button>
-
-            <button 
-              onClick={(e) => { e.stopPropagation(); }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors shadow-sm ${
-                isAdded 
-                ? 'bg-blue-50 border border-blue-100 text-blue-600' 
-                : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-              }`}
-            >
-              {isAdded ? <Check className="w-3.5 h-3.5" /> : <Calendar className="w-3.5 h-3.5" />}
-              {actionButton}
-            </button>
+        {attachments.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {attachments.slice(0, 2).map((attachment) => (
+              <span
+                key={attachment}
+                className="inline-flex h-7 max-w-[150px] items-center gap-1.5 rounded-lg border border-mail-line bg-mail-muted px-2 text-[10px] font-medium text-mail-primary"
+              >
+                <Paperclip className="h-3 w-3 shrink-0" />
+                <span className="truncate">{attachment}</span>
+              </span>
+            ))}
+            {attachments.length > 2 && (
+              <span className="inline-flex h-7 items-center rounded-lg border border-mail-line bg-mail-muted px-2 text-[10px] font-semibold text-mail-primary">
+                +{attachments.length - 2}
+              </span>
+            )}
           </div>
         )}
       </div>
-    </div>
+    </button>
   );
 }

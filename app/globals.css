@@ -1,6 +1,6 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -39,6 +39,31 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-mail-canvas: var(--mail-canvas);
+  --color-mail-muted: var(--mail-muted);
+  --color-mail-control: var(--mail-control);
+  --color-mail-primary: var(--mail-primary);
+  --color-mail-secondary: var(--mail-secondary);
+  --color-mail-line: var(--mail-line);
+  --color-mail-unread: var(--mail-unread);
+  --color-mail-avatar-sand: var(--mail-avatar-sand);
+  --color-mail-avatar-sand-ink: var(--mail-avatar-sand-ink);
+  --color-mail-avatar-slate: var(--mail-avatar-slate);
+  --color-mail-avatar-slate-ink: var(--mail-avatar-slate-ink);
+  --color-mail-avatar-lilac: var(--mail-avatar-lilac);
+  --color-mail-avatar-lilac-ink: var(--mail-avatar-lilac-ink);
+  --color-mail-avatar-sage: var(--mail-avatar-sage);
+  --color-mail-avatar-sage-ink: var(--mail-avatar-sage-ink);
+  --color-mail-avatar-rose: var(--mail-avatar-rose);
+  --color-mail-avatar-rose-ink: var(--mail-avatar-rose-ink);
+  --color-nav-canvas: var(--nav-canvas);
+  --color-nav-ink: var(--nav-ink);
+  --color-nav-secondary: var(--nav-secondary);
+  --color-nav-muted: var(--nav-muted);
+  --color-nav-line: var(--nav-line);
+  --color-nav-active: var(--nav-active);
+  --color-nav-hover: var(--nav-hover);
+  --color-nav-avatar: var(--nav-avatar);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -81,6 +106,31 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --mail-canvas: #ffffff;
+  --mail-muted: #f7f7f5;
+  --mail-control: #f3f3f1;
+  --mail-primary: #181817;
+  --mail-secondary: #6f706d;
+  --mail-line: #ecece9;
+  --mail-unread: #22a447;
+  --mail-avatar-sand: #ebe8e2;
+  --mail-avatar-sand-ink: #4b443a;
+  --mail-avatar-slate: #e4e8ef;
+  --mail-avatar-slate-ink: #3e4d64;
+  --mail-avatar-lilac: #e9e4ef;
+  --mail-avatar-lilac-ink: #59466b;
+  --mail-avatar-sage: #e4ece7;
+  --mail-avatar-sage-ink: #3b5846;
+  --mail-avatar-rose: #f0e6e3;
+  --mail-avatar-rose-ink: #6b443b;
+  --nav-canvas: #fafaf8;
+  --nav-ink: #20201f;
+  --nav-secondary: #555653;
+  --nav-muted: #7a7b77;
+  --nav-line: #e6e6e2;
+  --nav-active: #eeeeeb;
+  --nav-hover: #f2f2ef;
+  --nav-avatar: #f0f0ed;
 }
 
 .dark {

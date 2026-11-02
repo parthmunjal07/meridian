@@ -68,7 +68,7 @@ export default function CalendarPage() {
   const fetchStart = view === 'day' ? dayStart : view === 'week' ? weekStart : startOfWeek(monthStart, { weekStartsOn: 1 });
   const fetchEnd = view === 'day' ? dayEnd : view === 'week' ? weekEnd : endOfWeek(monthEnd, { weekStartsOn: 1 });
 
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
     `/api/calendar?timeMin=${fetchStart.toISOString()}&timeMax=${fetchEnd.toISOString()}`,
     fetcher
   );
@@ -217,6 +217,21 @@ export default function CalendarPage() {
                   ? `${format(weekStart, 'MMMM')} ${format(currentDate, 'yyyy')}`
                   : format(currentDate, 'MMMM yyyy')}
             </h2>
+            <div className="mt-1 h-4">
+              {isValidating && (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="flex items-center gap-2 text-[11px] font-medium text-zinc-500"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-900 motion-reduce:animate-none"
+                  />
+                  {isLoading ? 'Fetching events…' : 'Refreshing events…'}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-6">
@@ -261,12 +276,6 @@ export default function CalendarPage() {
             <span>Failed to load calendar: {error.message || 'Unknown error'}</span>
           </div>
         )}
-        {isLoading && (
-          <div className="px-8 py-3 border-b border-zinc-100 text-zinc-400 text-[13px] font-medium">
-            Loading your calendar...
-          </div>
-        )}
-
         {/* Days Header */}
         <div className="flex shrink-0 px-4">
           <div className="w-16 shrink-0" /> {/* Time column spacer */}
@@ -293,7 +302,13 @@ export default function CalendarPage() {
         </div>
 
         {/* Scrollable Grid Body */}
-        <div className="flex-1 overflow-y-auto flex px-4 relative pb-20" ref={scrollContainerRef}>
+        <div
+          className="flex-1 overflow-y-auto flex px-4 relative pb-20"
+          ref={scrollContainerRef}
+          role="region"
+          aria-busy={isValidating}
+          aria-label="Calendar events"
+        >
           {/* Time Labels */}
           <div className="w-16 shrink-0 relative pt-4">
             {HOURS.map((hour) => (
@@ -322,7 +337,7 @@ export default function CalendarPage() {
               const dayEvents = events.filter((e: any) => e.start && isSameDay(new Date(e.start), day));
 
               return (
-                <div key={i} className="relative">
+                <div key={i} className={`relative ${isLoading ? 'pointer-events-none' : ''}`}>
                   {/* Clickable Background Slots */}
                   <div className="absolute inset-0 top-0">
                     {HOURS.map((hour) => (
@@ -334,6 +349,33 @@ export default function CalendarPage() {
                       />
                     ))}
                   </div>
+
+                  {/* Event-shaped loading placeholders keep the timeline from feeling frozen. */}
+                  {isLoading && (
+                    <div aria-hidden="true" className="absolute inset-x-1 top-0 z-10">
+                      {(view === 'day'
+                        ? [
+                            { top: 8.25, height: 1.15 },
+                            { top: 10.5, height: 0.8 },
+                            { top: 13.25, height: 1.4 },
+                          ]
+                        : [{ top: 8.5 + (i % 4) * 1.15, height: 0.8 + (i % 2) * 0.35 }]
+                      ).map((placeholder, placeholderIndex) => (
+                        <div
+                          key={placeholderIndex}
+                          className="absolute inset-x-0 animate-pulse rounded-2xl border border-zinc-200 bg-zinc-100 p-3 motion-reduce:animate-none"
+                          style={{
+                            top: `${placeholder.top * PIXELS_PER_HOUR}px`,
+                            height: `${placeholder.height * PIXELS_PER_HOUR}px`,
+                            minHeight: '48px',
+                          }}
+                        >
+                          <div className="h-2.5 w-2/3 rounded-full bg-zinc-200" />
+                          <div className="mt-2 h-2 w-1/3 rounded-full bg-zinc-200/80" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Events */}
                   {dayEvents.map((event: any, idx: number) => {

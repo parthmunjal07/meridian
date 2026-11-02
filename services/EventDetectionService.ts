@@ -31,7 +31,6 @@ export async function detectSmartChips(emailSubject: string, emailBody: string, 
     return { hasMeeting: false, hasBugOrFeature: false };
   }
 }
-
 /**
  * 2. Meeting Intelligence
  * Extracts action items from an email thread after a calendar event ends
@@ -61,38 +60,5 @@ export async function extractMeetingActionItems(threadContent: string) {
   } catch (error) {
     console.error('Failed to extract meeting action items:', error);
     return { actionItems: [], summary: '' };
-  }
-}
-
-/**
- * 3. Thread Decision Log
- * Takes a long email thread as input and collapses it into decisions made,
- * open questions, and action items with owners.
- */
-export async function collapseThreadDecisionLog(threadContent: string) {
-  const content = sanitizeLongText(threadContent, 5000);
-
-  try {
-    const { object } = await generateObject({
-      model: mistral('mistral-large-latest'),
-      system: 'You are an intelligent summarization engine that distills long email threads into clear, structured decision logs for executives.',
-      prompt: `Analyze the following email thread and collapse it into a structured decision log.\n\nThread Context:\n${content}`,
-      schema: z.object({
-        decisionsMade: z.array(z.string()).describe('List of clear decisions that were agreed upon in the thread.'),
-        openQuestions: z.array(z.string()).describe('List of questions that remain unanswered or require further discussion.'),
-        actionItems: z.array(
-          z.object({
-            task: z.string(),
-            owner: z.string(),
-          })
-        ).describe('List of next steps and who is responsible for them.'),
-        tlDr: z.string().describe('A very brief 2-3 sentence executive summary of the entire thread.'),
-      }),
-    });
-
-    return object;
-  } catch (error) {
-    console.error('Failed to collapse thread decision log:', error);
-    return null;
   }
 }

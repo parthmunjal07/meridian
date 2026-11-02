@@ -2,42 +2,22 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { redis } from '@/lib/redis';
-import { generateEmbedding, mistral, sanitizeLongText } from '@/lib/ai';
+import { generateEmbedding } from '@/lib/ai';
 import { waitUntil } from '@vercel/functions';
-import { generateObject } from 'ai';
-import { z } from 'zod';
 
 const WEBHOOK_SECRET = process.env.CORSAIR_WEBHOOK_SECRET || 'test-secret';
 
 async function processEmailBackground(emailId: string, userId: string, payload: any) {
   try {
-    const snippet = sanitizeLongText(payload.body || payload.subject, 300);
-    const prompt = `Analyze this incoming email. Is it URGENT, NORMAL, or FYI?
-From: ${payload.from || 'Unknown'}
-Subject: ${payload.subject || 'No Subject'}
-Snippet: ${snippet}`;
-
-    // 1. Use generateObject with Zod instead of generateText
-    const { object } = await generateObject({
-      model: mistral('mistral-small-latest'), // Fast and efficient for classification
-      system: 'You are an email triage assistant.',
-      prompt,
-      schema: z.object({
-        priority: z.enum(['URGENT', 'NORMAL', 'FYI']).describe('The priority level of the email.'),
-      }),
-    });
-
-    const priorityLevel = object.priority;
-
-    // 2. Generate Embedding
+    // Generate the search embedding before storing the email.
     const embedding = await generateEmbedding(payload.body || payload.subject || '');
     const embeddingString = `[${embedding.join(',')}]`;
 
     const newId = crypto.randomUUID();
 
-    // 3. Store in pgvector database
+    // Store in pgvector database.
     await prisma.$executeRaw`
-      INSERT INTO "Email" (id, "userId", "corsairId", subject, body, "from", "to", date, "priorityLevel", "isRead", "updatedAt", embedding)
+      INSERT INTO "Email" (id, "userId", "corsairId", subject, body, "from", "to", date, "isRead", "updatedAt", embedding)
       VALUES (
         ${newId}, 
         ${userId}, 
@@ -47,14 +27,13 @@ Snippet: ${snippet}`;
         ${payload.from || 'unknown@example.com'}, 
         ${payload.to || 'user@example.com'}, 
         NOW(), 
-        ${priorityLevel}, 
         false, 
         NOW(), 
         ${embeddingString}::vector
       )
     `;
 
-    // 4. SSE Push via Redis Pub/Sub
+    // Push the new message to the inbox via Redis Pub/Sub.
     const newEmail = await prisma.email.findUnique({ where: { id: newId } });
     if (newEmail) {
       await redis.publish(`user:${userId}:emails`, JSON.stringify(newEmail));
